@@ -1,0 +1,587 @@
+'''
+Sto omogucavamo i kako:
+    1) korisnik upisuje naredbu po naredbu (omoguceno pomocu while petlje na kraju koda;
+        dozvoljeni su i prelasci u novi red, a kraj unošenja naredbi označava se pomoću ';')
+    2) varijable (npr. €var -> kao sto bi u php-u imali $var; definiranje varijable bi bilo
+        ovako: €cvijet = Rosa rubiginosa)
+    3) for petlja (npr. $var{$k = $k + 1} -> znaci da se €var puta izvrši naredba $k = $k+1)
+    4) definicije funkcija (pomocu kljucne rijeci funk, npr. funk plus(a, b){ret a+b})
+    5) funkcijski poziv (opet pomocu funk, ali se od definicije razlikuje po tome #mislim da nam ne treba taj funk u 4) i 5) - Ivana
+        sto nakon oble zagrade ne dode vitica)
+    6) operator ~ (alias surf) koristi se za dobivanje površine cvijeta t.d. se stavi surf €cvijet Ili
+    surf Rosa rubiginosa
+    7) print u datoteku pomocu kljucne rijeci 'datw' (ne znam sta bi mogao uopce pisati u datoteku)
+    8) citanje iz datoteke pomocu kljucne rijeci 'datread' (ne znam sta bi mogao uopce citati iz datoteke)
+    9) konacni tip podataka (zasad je flower formula, al kiki hoce kaktuse pa ne znam
+        sta bi bilo kod kaktusa; za flower formula tip podatka ce se oznacavat s ff; flower formula
+        nalazit ce se u uglatim zagradama i sastojat ce se od velikih i malih slova i brojeva;
+        u stvarnosti su komplicirane al mi mozemo koristit jednostavniju verziju;
+        kratki opis: https://www.vedantu.com/neet/floral-formula-of-fabaceae)
+            -ima i za katuse ta formula (https://www.cactus-art.biz/note-book/Dictionary/Dictionary_F/dictionary_floral_formula.htm)
+    7) potencijalno beskonacni tip podatka 'gen' (sekvence dna)
+    8) operator ? (alias ed) koristi se za racunanje genetske udaljenosti(evolutionary distance);
+        to je višemjesni operator sto znaci da se moze pozvati na proizvoljno mnogo biljaka;
+        tim biljkama ce se genomi usporedivati do duljine biljke s najkracim genomom i
+        vratit ce se one dvije biljke s najmanjom razlikom; kao i surf moze se pozvati na varijablama
+        ili latinskim nazivima
+    9) operator ß (alias cmp) koristi se za pronalazak genetski najblizeg cvijeta;
+        ubiginosa
+    10) sql naredba za unos cvijeta u tablicu pomocu operator '->'
+        (npr. ->Rosa rubiginosa->[K5C5AG10]->ATGCTGACGTACGTTA unosi u tablicu redak
+        gdje je ime Rosa rubiginosa, cvjetna formula je K5C5AG10)
+
+    napomena: varijable u koje se pohranjuju brojevi su ozn s $, a ostale s €
+    napomena: pojedine naredbe u jeziku moraju biti odvojene s \n
+    napomena: kao argumente fja (odvojene zarezima) dozvoljavamo samo brojeve, cvjetne formule, sekvence gena,
+    latinske nazive, FLOWER_VAR, NUM_VAR (dakle ne dozvoljavamo da argument bude npr. $k + $l -
+    on je to dozvolio u primjeru 09)
+'''
+from vepar import *
+from backend import PristupLog
+
+class T(TipoviTokena):
+    ZA = 'za' #for Petlja, eg:
+              #€var = 2, €k = 0
+              #za €var{k = k+1} --> k = 2
+    #FUNK = 'funk' #deklaracija funkcije eg: funk plus(a, b){ret a+b}
+    RET = 'ret' #povratna vrijednost funkcije
+    DATO, DATC = 'dato', 'datc' #otvori/zatvori dadodedu
+    DATW, DATREAD = 'datw', 'datread' #pisi/citaj dadodedu
+    EOL = ";" #kraj unosa
+    SURF = '~'
+    GEN, FF = 'gen', 'ff'
+    NR = "\n"
+    #ideja:     #mislim da je ovo bolji nacin, jer time omogucavamo koristenje vise datoteka istovremeno
+    #dato("abc.txt") -mozda nepotrebno
+    #datw("ime.txt","pqr")
+    #€var = datread("ime.txt") --> €var = "pqr"
+    #datc() -mozda nepotrebno
+    CMP, JEDN, ED = 'ß=?'
+    PLUS, MINUS, PUTA, KROZ, ZAREZ = '+-*/,'
+    OO, OZ, VO, VZ, UO, UZ = '(){}[]' #OO = obla otvorena
+    SQLINSERT = '->'
+    class LAT_NAZ(Token): #latinski naziv sukulenta, prva rijec pocinje velikim slovom, druga bi
+        pass              # trebala malim, ali zasad prihvaca i drugu velikim - Ivana popravila
+    class BROJ(Token):
+        def vrijednost(t): return int(t.sadržaj)
+    class IME(Token): #ime fje
+        def vrijednost(self, mem, unutar): return mem[self]
+    class NUMVAR(Token):
+        def vrijednost(self, mem, unutar): return mem[self]
+    class FLOWERVAR(Token):
+        def vrijednost(self, mem, unutar): return mem[self]
+    class FLOWERF(Token):
+        pass
+    class GENSEKV(Token):
+        pass
+    class DAT(Token): #ime datoteke
+        pass
+    class SQLIME(Token): #za osposobljavanje sql-a
+        pass
+
+@lexer
+def bilj(lex):
+    for znak in lex:
+        if znak == '\n':
+            yield lex.token(T.NR)
+        elif znak.isspace():
+            lex.zanemari()
+        elif znak.isdecimal():
+            lex.prirodni_broj(znak)
+            yield lex.token(T.BROJ)
+        elif znak.isupper():
+            lex * str.isalpha
+            if lex >= " ":  #latinski naziv
+                znak = next(lex)
+                if znak.isupper():
+                    raise lex.greška('očekivano malo slovo')
+                else:
+                    lex * str.isalpha
+                yield lex.literal_ili(T.LAT_NAZ)
+            else:   #sekvenca gena
+                yield lex.token(T.GENSEKV)
+        elif znak == '€':   #varijabla
+            lex * str.isalnum
+            yield lex.literal_ili(T.FLOWERVAR)
+        elif znak == '$':   #varijabla
+            lex * str.isalnum
+            yield lex.literal_ili(T.NUMVAR)
+        elif znak == '#': #komentar po uzoru na primjer 09
+            lex - "\n"      #for some reason vraca error da nije naso "\n" -> to se
+                            #dogodi samo za unos kroz terminal, ako mu se da ulaz ovak kak sam stavila radi normalno -Ivana
+                            #mislim da je problem u tome sto prilikom ucitavanja stringa iz terminala python u liniji ulaz = str(input()) nigdje ne pohranjuje znak "\n"
+                            #pa bi ovo trebali drugacije citati, kao do kraja retka ili staviti ulaz = str(input())+"\n"  
+                            #stavila sam ovu drugu opciju i cini mi se da radi kak treba ~Dora
+            lex.zanemari()
+        elif znak == '[':
+            lex - ']'
+            yield lex.token(T.FLOWERF)
+        elif znak == '-':
+            if lex >= '>':
+                yield lex.token(T.SQLINSERT)
+            else:
+                yield lex.token(T.MINUS)
+        elif znak == '"':
+            lex - '"'
+            yield lex.token(T.DAT)
+        else:
+            lex * str.isalpha
+            if lex.sadržaj == "surf":
+                yield lex.token(T.SURF)
+            elif lex.sadržaj == "cmp":
+                yield lex.token(T.CMP)
+            elif lex.sadržaj == "ed":
+                yield lex.token(T.ED)
+            else:
+                yield lex.literal_ili(T.IME) #ako nije nis drugo, onda je literal
+
+#isprobavanje leksera da ne moram tipkati svaki put - Ivana
+#bilj('''#komentar
+#->Rosa rubiginosa->[K5C5AG10]->ATGCTGACGTACGTTA
+#€cvijet = Rosa rubiginosa;
+#surf €cvijet
+#€cvijet ? Rosa rubiginosa ? Rosa rugosa
+#~ €cvijet
+#$var{$k = $k + 1}
+#ATGCTGACGTACGTTA
+#[K5C5AG10]
+#''')
+
+###BKG
+# program -> funkcija | funkcija program
+# funkcija -> IME OO parametri? OZ VO naredba VZ
+# parametri -> ime | parametri ZAREZ ime | nesto_cvjetno | parametri ZAREZ nesto_cvjetno        #*** za sada nije omogueno da druga funkcija bude parametar funkcije
+# ime -> NUMVAR | FLOWERVAR
+# naredba -> pridruži | VO naredbe VZ | RET argument
+#         | gen_dist | closest | NUMVAR VO naredba VZ ##ovo zadnje je for petlja (treba omoguciti i da umjesto numvar pise samo broj)
+#         | sql | DATW OO DAT ZAREZ TEKST OZ | pridruziIzDat
+# naredbe -> naredba | naredbe NR naredba
+# pridruži -> NUMVAR JEDNAKO aritm | FLOWERVAR JEDNAKO nesto_cvjetno
+# pridružiIzDat ->  NUMVAR JEDNAKO DATREAD OO DAT OZ | NUMVAR JEDNAKO DATREAD OO DAT OZ
+# nesto_cvjetno -> FLOWERF | GENSEKV | LAT_NAZ
+# gen_dist -> cvjetni_clan |  gen_dist ED cvjetni_clan
+# closest -> cvjetni_clan |  closest CMP cvjetni_clan
+# sql -> SQLINSERT LAT_NAZ SQLINSERT FLOWERF SQLINSERT GENSEKV 
+# cvjetni_clan -> GENSEKV | LAT_NAZ | FLOWERVAR | FLOWERF
+# aritm -> član | aritm PLUS član | aritm MINUS član
+# član -> faktor | član ZVJEZDICA faktor
+# faktor -> BROJ | NUMVAR | IME poziv | OO aritm OZ | MINUS faktor | SURF FLOWERVAR | SURF nesto_cvjetno
+# poziv -> OO OZ | OO argumenti OZ
+# argumenti -> argument | argumenti ZAREZ argument
+# argument -> nesto_cvjetno | BROJ
+#
+# Mozemo biljku identificirati s bilo kojim od: cvjetna varijabla, lat naz, cvj form ili gen
+#(svaki od njih jedinstveno odreduje biljku) ako se pozove ed i proslijedi ko
+#parametar bilokoje od ta tri, convertamo u onaj u koji zelimo
+# (u bazi nekoj pisu trojke) i provedemo ed
+
+
+### Parsing time :,) -> dosta toga po uzoru na primjer 09
+class P(Parser):
+    def program(p) -> 'Memorija':
+        p.funkcije = Memorija(redefinicija=False)
+        while not p > KRAJ:
+            if p > T.IME:
+                funkcija = p.funkcija()
+                p.funkcije[funkcija.ime] = funkcija
+            else:
+                naredba = p.naredba()
+        return p.funkcije
+
+    def funkcija(p) -> 'Funkcija':
+        p >= T.NR
+        atributi = p.imef, p.parametrif = p >> T.IME, p.parametri()
+        return Funkcija(*atributi, p.naredba())
+
+    def varijabla(p) -> 'Varijabla':
+        return p.ime()
+
+    def ime(p) -> 'NUMVAR|FLOWERVAR':
+        p >= T.NR
+        return p >> {T.NUMVAR, T.FLOWERVAR}
+
+    def nesto_cvjetno(p) -> 'FLOWERF|GENSEKV|LAT_NAZ':
+        p >= T.NR
+        return p >> {T.FLOWERF, T.GENSEKV, T.LAT_NAZ}
+
+    def parametri(p) -> 'ime*':
+        p >> T.OO
+        if p >= T.OZ: return []
+        if p > T.NUMVAR or p > T.FLOWERVAR:
+            param = [p.ime()]
+        else:
+            param = [p.nesto_cvjetno()]
+        while p >= T.ZAREZ:
+            if p > T.NUMVAR or p > T.FLOWERVAR:
+                param.append(p.ime())
+            else:
+                param.append(p.nesto_cvjetno())
+        p >> T.OZ
+        return param
+
+    def naredba(p) -> 'petlja|blok|Vrati|Pridruživanje|UpisiUDat|PridruziIzDat':
+        p >= T.NR
+        p >= T.NR
+        if p > T.DATW:
+            p >= T.NR
+            p >> T.DATW
+            p >> T.OO
+            dat = p >> T.DAT
+            p >> T.ZAREZ
+            unos = p >> {T.FLOWERVAR, T.NUMVAR}
+            p >> T.OZ
+            return UpisiUDat(dat, unos)
+        elif p > T.NUMVAR:
+            p >= T.NR
+            ime = p.ime()
+            if p > T.JEDN:
+                p >> T.JEDN
+                if p > T.DATREAD:
+                    p >> T.DATREAD
+                    p >> T.OO
+                    dat = p >> T.DAT
+                    p >> T.OZ
+                    return PridruziIzDat(dat,ime) 
+                else:
+                    return Pridruživanje(ime, p.tipa(ime))
+            else:
+                return p.petlja(ime)
+        elif p > T.VO: 
+            return p.blok()
+        elif p >= T.RET: 
+            return Vrati(p.imef)
+        elif p >= T.SQLINSERT:
+            prvi = p >> T.LAT_NAZ
+            p >> T.SQLINSERT
+            drugi = p >> T.FLOWERF
+            p >> T.SQLINSERT
+            treci = p >> T.GENSEKV
+            return Insert(prvi, drugi, treci)
+        elif p > T.NUMVAR:
+            ime = p.ime()
+            p >> T.JEDN
+            if p > T.DATREAD:
+                p >> T.DATREAD
+                p >> T.OO
+                dat = p >> T.DAT
+                p >> T.OZ
+                return PridruziIzDat(dat,ime) 
+            else:
+                return Pridruživanje(ime, p.tipa(ime))
+        elif p > T.FLOWERVAR:
+            ime = p.ime()
+            if p > T.JEDN:
+                p >> T.JEDN
+                if p > T.DATREAD:
+                    p >> T.DATREAD
+                    p >> T.OO
+                    dat = p >> T.DAT
+                    p >> T.OZ
+                    return PridruziIzDat(ime,dat)
+                else:
+                    return Pridruživanje(ime, p.tipa(ime))
+            elif p > T.ED:
+                return p.gen_dist(ime)
+            elif p > T.CMP:
+                return p.closest(ime)    
+        else: #preostaje jedino CMP ili ED 
+            cvjetni = p.nesto_cvjetno()
+            if p > T.ED:
+                return p.gen_dist(cvjetni)
+            else:
+                p >> T.CMP
+                return p.closest(cvjetni)
+
+    def gen_dist(p, first):
+        flowers = [first]
+        while p >= T.ED:
+            if p > T.FLOWERVAR:
+                flowers.append(p.tipa(p.ime()))
+            else:
+                flowers.append(p.nesto_cvjetno())
+        return Distance(flowers)
+
+    def closest(p, first):
+        flowers = [first]
+        while p >= T.CMP:
+            if p > T.FLOWERVAR:
+                flowers.append(p.tipa(p.ime()))
+            else:
+                flowers.append(p.nesto_cvjetno())
+        return Closest(flowers)
+
+    def tipa(p, ime) -> 'NUMVAR|FLOWERVAR':
+        p >= T.NR
+        if ime ^ T.NUMVAR: return p.aritm()
+        elif ime ^ T.FLOWERVAR: return p.nesto_cvjetno()
+        else: assert False, f'Nepoznat tip od {ime}'
+
+    def petlja(p, kolikoPuta) -> 'Petlja': #stavljamo li da je u petlji moguca samo jedna naredba? - valjda je Dorotea ovo pitala, trebalo bi bit moguce proizvoljno mnogo naredbi -Ivana
+        p >= T.NR
+        p >> T.VO
+        izvrsiti = p.naredba()
+        p >= T.NR
+        p >> T.VZ
+        p >= T.NR
+        return Petlja(kolikoPuta, izvrsiti)
+
+    def blok(p) -> 'Blok|naredba':
+        p >= T.NR
+        p >> T.VO
+        if p >= T.VZ: return Blok([])
+        n = [p.naredba()]
+        while p >= T.NR and not p > T.VZ:
+            n.append(p.naredba())
+        p >> T.VZ
+        p >= T.NR
+        return Blok.ili_samo(n)
+        
+    def argumenti(p, parametri) -> 'tipa*':
+        arg = []
+        p >> T.OO
+        for i, parametar in enumerate(parametri):
+            if i: 
+                p >> T.ZAREZ
+            arg.append(p.tipa(parametar))
+        p >> T.OZ
+        return arg
+
+    def aritm(p) -> 'Zbroj|član':
+        članovi = [p.član()]
+        while ...:
+            if pp := p >= T.PLUS: 
+                članovi.append(p.član())
+            elif pp := p >= T.MINUS: 
+                članovi.append(Suprotan(p.član()))
+            else: 
+                return Zbroj.ili_samo(članovi)
+
+    def član(p) -> 'Umnožak|faktor':
+        faktori = [p.faktor()]
+        while p >= T.PUTA: faktori.append(p.faktor())
+        return Umnožak.ili_samo(faktori)
+
+    def faktor(p) -> 'Suprotan|Poziv|aritm|BROJ':
+        if p >= T.MINUS: 
+            return Suprotan(p.faktor())
+        elif call := p >= T.IME:
+            if call in p.funkcije:
+                funkcija = p.funkcije[ime]
+                return Poziv(funkcija, p.argumenti(funkcija.parametri))
+            else:
+                return Poziv(nenavedeno, p.argumenti(p.parametrif))
+        elif p >= T.OO:
+            u_zagradi = p.aritm()
+            p >> T.OZ
+            return u_zagradi
+        elif toEvaluate := p >= T.NUMVAR:
+            return toEvaluate
+        elif p >= T.SURF:
+            if calc := p >= T.FLOWERVAR:
+                return SurfaceArea(calc)
+            else:
+                return SurfaceArea(p.nesto_cvjetno())
+        else: 
+            return p >> T.BROJ
+
+### AST
+# Funkcija: ime: IME parametri:[NUMVAR|FLOWERVAR|nesto_cvjetno] tijelo:naredba
+# naredba: Petlja: istinitost:JE|NIJE uvjet:log tijelo:naredba
+#          Blok: naredbe:[naredba]
+#          Pridruživanje: ime:AIME|LIME pridruženo:izraz
+#          UpisiUDat: imeDat:dat ime:ime
+#          PridruziIzDat: ime:ime imeDat:dat 
+#          Insert: prvi:LAT_NAZ drugi:FLOWERF treci:GENSEKV
+#          Closest: flowers:[nesto_cvjetno]
+#          Distance: flowers:[nesto_cvjetno]
+#          Vrati: što:izraz
+# izraz: aritm: Zbroj: pribrojnici:[aritm]
+#               Suprotan: od:aritm
+#               Umnožak: faktori:[aritm]
+#        Poziv: funkcija:Funkcija? argumenti:[izraz]
+
+class UpisiUDat(AST):
+    imeDat: 'DAT'
+    ime: 'IME'
+    def izvrsi(self, mem, unutar):
+        f = open(self.imeDat, 'w')
+        f.write(self.unos.vrijednost(mem, unutar))
+        f.close()
+
+class PridruziIzDat(AST):
+    ime: 'IME'
+    imeDat: 'DAT'
+    def izvrsi(self,mem,unutar):
+        f=open(self.imeDat,'r')
+        mem[self.ime] = f.read()
+        f.close()
+
+class Stupac(AST):
+    """Specifikacija stupca u tablici."""
+    ime: 'SQLIME'
+    tip: 'SQLIME'
+    rows: 'SQLIME*'
+    #veličina: 'BROJ?'
+
+class Create(AST):
+    """Naredba CREATE TABLE."""
+    tablica: 'SQLIME'
+    specifikacije: 'Stupac*'
+
+    def razriješi(naredba):
+        pristup = rt.imena[naredba.tablica] = Memorija(redefinicija=False)
+        for stupac in naredba.specifikacije:
+            pristup[stupac.ime] = PristupLog(stupac)
+            
+class Insert(AST):
+    prvi: 'LAT_NAZ'
+    drugi: 'FLOWERF'
+    treci: 'GENSEKV'
+
+class Closest(AST):
+    flowers: 'nesto_cvjetno*'
+
+class Distance(AST):
+    flowers: 'nesto_cvjetno*' 
+
+class SurfaceArea(AST):
+    flower: 'nesto_cvjetno'
+
+class OneLine(AST):
+    ime: 'linija'
+    tijelo: 'naredba'
+    
+class Funkcija(AST):
+    ime: 'IME'
+    parametri: 'VAR*'
+    tijelo: 'naredba'
+    def pozovi(funkcija, argumenti):
+        lokalni = Memorija(zip(funkcija.parametri, argumenti))
+        try: funkcija.tijelo.izvrši(mem=lokalni, unutar=funkcija)
+        except Povratak as exc: return exc.preneseno
+        else: raise GreškaIzvođenja(f'{funkcija.ime} nije ništa vratila')
+
+class Poziv(AST):
+    funkcija: 'Funkcija?'
+    argumenti: 'izraz*'
+    def vrijednost(poziv, mem, unutar):
+        pozvana = poziv.funkcija
+        if pozvana is nenavedeno: pozvana = unutar  # rekurzivni poziv
+        argumenti = [a.vrijednost(mem, unutar) for a in poziv.argumenti]
+        return pozvana.pozovi(argumenti)
+
+    def za_prikaz(poziv):  # samo za ispis, da se ne ispiše čitava funkcija
+        r = {'argumenti': poziv.argumenti}
+        if poziv.funkcija is nenavedeno: r['*rekurzivni'] = True
+        else: r['*ime'] = poziv.funkcija.ime
+        return r
+
+def ispunjen(ast, mem, unutar):
+    u = ast.uvjet.vrijednost(mem, unutar)
+    if ast.istinitost ^ T.JE: return u
+    elif ast.istinitost ^ T.NIJE: return not u
+    else: assert False, f'Tertium non datur! {ast.istinitost}'
+
+class Petlja(AST):
+    kolikoPuta: 'NUMVAR'
+    izvrsiti: 'naredba'
+    def izvrši(petlja, mem, unutar):
+        for i in range(kolikoPuta.vrijednost()):
+            petlja.izvrsiti.izvrši(mem, unutar)
+
+class Blok(AST):
+    naredbe: 'naredba*'
+    def izvrši(blok, mem, unutar):
+        for naredba in blok.naredbe: naredba.izvrši(mem, unutar)
+
+class Pridruživanje(AST):
+    ime: 'IME'
+    pridruženo: 'izraz'
+    def izvrši(self, mem, unutar):
+        mem[self.ime] = self.pridruženo.vrijednost(mem, unutar)
+
+class Vrati(AST):
+    što: 'izraz'
+    def izvrši(self, mem, unutar):
+        raise Povratak(self.što.vrijednost(mem, unutar))
+
+class Zbroj(AST):
+    pribrojnici: 'aritm*'
+    def vrijednost(zbroj, mem, unutar):
+        return sum(p.vrijednost(mem, unutar) for p in zbroj.pribrojnici)
+    
+class Suprotan(AST):
+    od: 'aritm'
+    def vrijednost(self, mem, unutar): return -self.od.vrijednost(mem, unutar)
+    
+class Umnožak(AST):
+    faktori: 'aritm*'
+    def vrijednost(umnožak, mem, unutar):
+        return math.prod(f.vrijednost(mem, unutar) for f in umnožak.faktori)
+
+
+class Povratak(NelokalnaKontrolaToka): """Signal koji šalje naredba vrati."""
+
+#sql
+rt.imena = Memorija(redefinicija=False)
+nazivi = ["Rosa rubiginosa"]
+nazivi.append("Rosa rugosa")
+stupci = [Stupac("ln", "LAT_NAZ", nazivi)]
+formule = ["[K5C5AG10]"]
+formule.append("[K5C2AG9]")
+stupci.append(Stupac("FF", "FLOWERF", formule))
+geni = ["ATGCTGACGTACGTTA"]
+geni.append("ATGACGCTGTACGTTA")
+stupci.append(Stupac("GS", "GENSEKV", geni))
+Create("Botanika", stupci).razriješi()
+for tablica, log in rt.imena:
+    print('Tablica', tablica, '- stupci:')
+    for stupac, pristup in log: 
+        print('\t', stupac, pristup)
+        for thing in pristup.objekt.rows: ##prolazak po rows
+            print('\t', thing)
+
+#isprobavanje parsera:
+"""
+prikaz(P('''#komentar
+program(){
+->Rosa rubiginosa->[K5C5AG10]->ATGCTGACGTACGTTA
+€cvijet = Rosa rubiginosa
+$num1 = surf €cvijet
+€cvijet ? Rosa rubiginosa ? Rosa rugosa
+$num = ~ €cvijet
+datw("dat.txt",$num1)
+€cvijet = datread("dat.txt")
+$var{$k=$k+1}
+}
+'''))"""
+"""
+bilj('''#komentar
+program(){
+->Rosa rubiginosa->[K5C5AG10]->ATGCTGACGTACGTTA
+€cvijet = Rosa rubiginosa
+$num1 = surf €cvijet
+€cvijet ? Rosa rubiginosa ? Rosa rugosa
+$num = ~ €cvijet
+$var{$k=$k+1}
+datw("dat.txt",€cvijet)
+$num1 = datread("dat.txt") 
+}
+''')"""
+
+""" prikaz(P('datw("dat.txt",€cvijet)')) """
+
+
+###treba otkomentirati za unos kroz terminal
+""" ukupni = ""
+while 1:
+    ulaz = str(input())+"\n" #nadodala sam ovdje +"\n" kao sto sam gore komentirala i cini mi se okej ~Dora
+    ukupni +=ulaz
+    for i in ulaz:
+        if i == ";":
+            bilj(ukupni)
+            ukupni = ""  """
+                
+### Beskontekstna gramatika:
+
+### Apstraktna sintaksna stabla (i njihovi atributi):
