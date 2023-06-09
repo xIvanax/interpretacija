@@ -5,20 +5,17 @@ Sto omogucavamo i kako:
     2) varijable (npr. €var -> kao sto bi u php-u imali $var; definiranje varijable bi bilo
         ovako: €cvijet = Rosa rubiginosa)
     3) for petlja (npr. $var{$k = $k + 1} -> znaci da se €var puta izvrši naredba $k = $k+1)
-    4) definicije funkcija (pomocu kljucne rijeci funk, npr. funk plus(a, b){ret a+b})
-    5) funkcijski poziv (opet pomocu funk, ali se od definicije razlikuje po tome #mislim da nam ne treba taj funk u 4) i 5) - Ivana
-        sto nakon oble zagrade ne dode vitica)
+    4) definicije funkcija (npr. plus(a, b){ret a+b})
+    5) funkcijski poziv (od definicije se razlikuje po tome sto nakon oble zagrade ne dode vitica)
     6) operator ~ (alias surf) koristi se za dobivanje površine cvijeta t.d. se stavi surf €cvijet Ili
     surf Rosa rubiginosa
-    7) print u datoteku pomocu kljucne rijeci 'datw' (ne znam sta bi mogao uopce pisati u datoteku)
-    8) citanje iz datoteke pomocu kljucne rijeci 'datread' (ne znam sta bi mogao uopce citati iz datoteke)
-    9) konacni tip podataka (zasad je flower formula, al kiki hoce kaktuse pa ne znam
-        sta bi bilo kod kaktusa; za flower formula tip podatka ce se oznacavat s ff; flower formula
+    7) print u datoteku pomocu kljucne rijeci 'datw'
+    8) citanje iz datoteke pomocu kljucne rijeci 'datread'
+    9) konacni tip podataka (flower formula
         nalazit ce se u uglatim zagradama i sastojat ce se od velikih i malih slova i brojeva;
         u stvarnosti su komplicirane al mi mozemo koristit jednostavniju verziju;
         kratki opis: https://www.vedantu.com/neet/floral-formula-of-fabaceae)
-            -ima i za katuse ta formula (https://www.cactus-art.biz/note-book/Dictionary/Dictionary_F/dictionary_floral_formula.htm)
-    7) potencijalno beskonacni tip podatka 'gen' (sekvence dna)
+    7) potencijalno beskonacni tip podatka (sekvence dna - zapocinje s %)
     8) operator ? (alias ed) koristi se za racunanje genetske udaljenosti(evolutionary distance);
         to je višemjesni operator sto znaci da se moze pozvati na proizvoljno mnogo biljaka;
         tim biljkama ce se genomi usporedivati do duljine biljke s najkracim genomom i
@@ -49,14 +46,13 @@ class T(TipoviTokena):
     DATW, DATREAD = 'datw', 'datread' #pisi/citaj dadodedu
     EOL = ";" #kraj unosa
     SURF = '~'
-    GEN, FF = 'gen', 'ff'
     NR = "\n"
     #ideja:     #mislim da je ovo bolji nacin, jer time omogucavamo koristenje vise datoteka istovremeno
     #dato("abc.txt") -mozda nepotrebno
     #datw("ime.txt","pqr")
     #€var = datread("ime.txt") --> €var = "pqr"
     #datc() -mozda nepotrebno
-    CMP, JEDN, ED = 'ß=?'
+    CMP, JEDN, ED, GEN = 'ß=?%'
     PLUS, MINUS, PUTA, KROZ, ZAREZ = '+-*/,'
     OO, OZ, VO, VZ, UO, UZ = '(){}[]' #OO = obla otvorena
     SQLINSERT = '->'
@@ -124,6 +120,9 @@ def bilj(lex):
         elif znak == '"':
             lex - '"'
             yield lex.token(T.DAT)
+        elif znak == '%':
+            lex * str.isalpha
+            yield lex.token(T.GENSEKV)
         else:
             lex * str.isalpha
             if lex.sadržaj == "surf":
@@ -134,18 +133,6 @@ def bilj(lex):
                 yield lex.token(T.ED)
             else:
                 yield lex.literal_ili(T.IME) #ako nije nis drugo, onda je literal
-
-#isprobavanje leksera da ne moram tipkati svaki put - Ivana
-#bilj('''#komentar
-#->Rosa rubiginosa->[K5C5AG10]->ATGCTGACGTACGTTA
-#€cvijet = Rosa rubiginosa;
-#surf €cvijet
-#€cvijet ? Rosa rubiginosa ? Rosa rugosa
-#~ €cvijet
-#$var{$k = $k + 1}
-#ATGCTGACGTACGTTA
-#[K5C5AG10]
-#''')
 
 ###BKG
 # program -> funkcija | funkcija program
@@ -185,6 +172,7 @@ class P(Parser):
                 funkcija = p.funkcija()
                 p.funkcije[funkcija.ime] = funkcija
             else:
+                print("naredba:")
                 naredba = p.naredba()
         return p.funkcije
 
@@ -220,7 +208,6 @@ class P(Parser):
         return param
 
     def naredba(p) -> 'petlja|blok|Vrati|Pridruživanje|UpisiUDat|PridruziIzDat':
-        p >= T.NR
         p >= T.NR
         if p > T.DATW:
             p >= T.NR
@@ -270,7 +257,9 @@ class P(Parser):
                 return Pridruživanje(ime, p.tipa(ime))
         elif p > T.FLOWERVAR:
             ime = p.ime()
+            print(ime)
             if p > T.JEDN:
+                print(" = ")
                 p >> T.JEDN
                 if p > T.DATREAD:
                     p >> T.DATREAD
@@ -279,7 +268,9 @@ class P(Parser):
                     p >> T.OZ
                     return PridruziIzDat(ime,dat)
                 else:
-                    return Pridruživanje(ime, p.tipa(ime))
+                    t = p.tipa(ime)
+                    print(t)
+                    return Pridruživanje(ime, t)
             elif p > T.ED:
                 return p.gen_dist(ime)
             elif p > T.CMP:
@@ -317,12 +308,11 @@ class P(Parser):
         else: assert False, f'Nepoznat tip od {ime}'
 
     def petlja(p, kolikoPuta) -> 'Petlja': #stavljamo li da je u petlji moguca samo jedna naredba? - valjda je Dorotea ovo pitala, trebalo bi bit moguce proizvoljno mnogo naredbi -Ivana
-        p >= T.NR
         p >> T.VO
+        p >= T.NR
         izvrsiti = p.naredba()
         p >= T.NR
         p >> T.VZ
-        p >= T.NR
         return Petlja(kolikoPuta, izvrsiti)
 
     def blok(p) -> 'Blok|naredba':
@@ -330,7 +320,9 @@ class P(Parser):
         p >> T.VO
         if p >= T.VZ: return Blok([])
         n = [p.naredba()]
+        print("blok")
         while p >= T.NR and not p > T.VZ:
+            print("Flag")
             n.append(p.naredba())
         p >> T.VZ
         p >= T.NR
@@ -523,6 +515,7 @@ class Umnožak(AST):
 class Povratak(NelokalnaKontrolaToka): """Signal koji šalje naredba vrati."""
 
 #sql
+
 rt.imena = Memorija(redefinicija=False)
 nazivi = ["Rosa rubiginosa"]
 nazivi.append("Rosa rugosa")
@@ -534,25 +527,26 @@ geni = ["ATGCTGACGTACGTTA"]
 geni.append("ATGACGCTGTACGTTA")
 stupci.append(Stupac("GS", "GENSEKV", geni))
 Create("Botanika", stupci).razriješi()
-for tablica, log in rt.imena:
-    print('Tablica', tablica, '- stupci:')
-    for stupac, pristup in log: 
-        print('\t', stupac, pristup)
-        for thing in pristup.objekt.rows: ##prolazak po rows
-            print('\t', thing)
+#for tablica, log in rt.imena:
+ #   print('Tablica', tablica, '- stupci:')
+ #   for stupac, pristup in log: 
+  #      print('\t', stupac, pristup)
+  #      for thing in pristup.objekt.rows: ##prolazak po rows
+    #        print('\t', thing)
 
 #isprobavanje parsera:
 """
 prikaz(P('''#komentar
 program(){
-->Rosa rubiginosa->[K5C5AG10]->ATGCTGACGTACGTTA
+->Rosa rubiginosa->[K5C5AG10]->%ATGCTGACGTACGTTA
 €cvijet = Rosa rubiginosa
+datw("dat.txt",€cvijet)
 $num1 = surf €cvijet
 €cvijet ? Rosa rubiginosa ? Rosa rugosa
-$num = ~ €cvijet
-datw("dat.txt",$num1)
-€cvijet = datread("dat.txt")
-$var{$k=$k+1}
+$num2 = ~ €cvijet
+$var{$k = $k + 1}
+€geni = %ATGCTGACGTACGTTA
+€formula = [K5C5AG10]
 }
 '''))"""
 """
