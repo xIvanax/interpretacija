@@ -33,6 +33,7 @@ Sto omogucavamo i kako:
     latinske nazive, FLOWER_VAR, NUM_VAR (dakle ne dozvoljavamo da argument bude npr. $k + $l -
     on je to dozvolio u primjeru 09)
 '''
+import os
 from vepar import *
 from backend import PristupLog
 
@@ -56,10 +57,10 @@ class T(TipoviTokena):
     PLUS, MINUS, PUTA, KROZ, ZAREZ = '+-*/,'
     OO, OZ, VO, VZ, UO, UZ = '(){}[]' #OO = obla otvorena
     SQLINSERT = '->'
-    class LAT_NAZ(Token): #latinski naziv sukulenta, prva rijec pocinje velikim slovom, druga bi
-        pass              # trebala malim, ali zasad prihvaca i drugu velikim - Ivana popravila
+    class LAT_NAZ(Token): #latinski naziv sukulenta, prva rijec pocinje velikim slovom, druga malim
+        def vrijednost(self, mem, unutar): return self.sadržaj
     class BROJ(Token):
-        def vrijednost(t): return int(t.sadržaj)
+        def vrijednost(self, mem, unutar): return int(self.sadržaj)
     class IME(Token): #ime fje
         def vrijednost(self, mem, unutar): return mem[self]
     class NUMVAR(Token):
@@ -67,13 +68,13 @@ class T(TipoviTokena):
     class FLOWERVAR(Token):
         def vrijednost(self, mem, unutar): return mem[self]
     class FLOWERF(Token):
-        pass
+        def vrijednost(self, mem, unutar): return self.sadržaj
     class GENSEKV(Token):
-        pass
+        def vrijednost(self, mem, unutar): return self.sadržaj
     class DAT(Token): #ime datoteke
-        pass
+        def vrijednost(self, mem, unutar): return self.sadržaj
     class SQLIME(Token): #za osposobljavanje sql-a
-        pass
+        def vrijednost(self, mem, unutar): return self.sadržaj
 
 @lexer
 def bilj(lex):
@@ -215,7 +216,7 @@ class P(Parser):
             p >> T.OO
             dat = p >> T.DAT
             p >> T.ZAREZ
-            unos = p >> {T.FLOWERVAR, T.NUMVAR}
+            unos = p.ime()
             p >> T.OZ
             return UpisiUDat(dat, unos)
         elif p > T.NUMVAR:
@@ -376,6 +377,9 @@ class P(Parser):
         else: 
             return p >> T.BROJ
 
+def izvrši(funkcije, *argv):
+    print('Program je vratio:', funkcije['program'].pozovi(argv))
+
 ### AST
 # Funkcija: ime: IME parametri:[NUMVAR|FLOWERVAR|nesto_cvjetno] tijelo:naredba
 # naredba: Petlja: istinitost:JE|NIJE uvjet:log tijelo:naredba
@@ -394,9 +398,11 @@ class P(Parser):
 
 class UpisiUDat(AST):
     imeDat: 'DAT'
-    ime: 'IME'
-    def izvrsi(self, mem, unutar):
-        f = open(self.imeDat, 'w')
+    unos: 'IME'
+    def izvrši(self, mem, unutar):
+        cistoIme = self.imeDat.vrijednost(mem, unutar)
+        novoIme = cistoIme[1:len(cistoIme) - 1] #uklonjeni navodnici iz imena kako bi se mogao izvrsiti open
+        f = open(novoIme, 'w+')
         f.write(self.unos.vrijednost(mem, unutar))
         f.close()
 
@@ -404,7 +410,7 @@ class PridruziIzDat(AST):
     ime: 'IME'
     imeDat: 'DAT'
     def izvrsi(self,mem,unutar):
-        f=open(self.imeDat,'r')
+        f=open(self.imeDat.vrijednost(mem, unutar),'r')
         mem[self.ime] = f.read()
         f.close()
 
@@ -429,20 +435,29 @@ class Insert(AST):
     prvi: 'LAT_NAZ'
     drugi: 'FLOWERF'
     treci: 'GENSEKV'
+    def izvrši(insert, mem, unutar):
+        print("insert")
 
 class Closest(AST):
     flowers: 'nesto_cvjetno*'
+    def izvrši(closest, mem, unutar):
+        print("closest")
 
 class Distance(AST):
     flowers: 'nesto_cvjetno*' 
+    def izvrši(distance, mem, unutar):
+        print("distance")
 
 class SurfaceArea(AST):
     flower: 'nesto_cvjetno'
-
+    def izvrši(surf, mem, unutar):
+        print("surf")
 class OneLine(AST):
     ime: 'linija'
     tijelo: 'naredba'
-    
+    def izvrši(onelie, mem, unutar):
+        print("onelie")
+
 class Funkcija(AST):
     ime: 'IME'
     parametri: 'VAR*'
@@ -467,12 +482,6 @@ class Poziv(AST):
         if poziv.funkcija is nenavedeno: r['*rekurzivni'] = True
         else: r['*ime'] = poziv.funkcija.ime
         return r
-
-def ispunjen(ast, mem, unutar):
-    u = ast.uvjet.vrijednost(mem, unutar)
-    if ast.istinitost ^ T.JE: return u
-    elif ast.istinitost ^ T.NIJE: return not u
-    else: assert False, f'Tertium non datur! {ast.istinitost}'
 
 class Petlja(AST):
     kolikoPuta: 'NUMVAR'
@@ -535,8 +544,8 @@ Create("Botanika", stupci).razriješi()
     #        print('\t', thing)
 
 #isprobavanje parsera:
-"""
-prikaz(P('''#komentar
+
+proba = P('''#komentar
 program(){
 ->Rosa rubiginosa->[K5C5AG10]->%ATGCTGACGTACGTTA
 €cvijet = Rosa rubiginosa
@@ -548,7 +557,9 @@ $var{$k = $k + 1}
 €geni = %ATGCTGACGTACGTTA
 €formula = [K5C5AG10]
 }
-'''))"""
+''')
+prikaz(proba, 5)
+izvrši(proba)
 """
 bilj('''#komentar
 program(){
