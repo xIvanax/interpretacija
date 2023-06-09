@@ -107,7 +107,7 @@ def bilj(lex):
             lex - "\n"      #for some reason vraca error da nije naso "\n" -> to se
                             #dogodi samo za unos kroz terminal, ako mu se da ulaz ovak kak sam stavila radi normalno -Ivana
                             #mislim da je problem u tome sto prilikom ucitavanja stringa iz terminala python u liniji ulaz = str(input()) nigdje ne pohranjuje znak "\n"
-                            #pa bi ovo trebali drugacije citati, kao do kraja retka ili staviti ulaz = str(input())+"\n"  
+                            #pa bi ovo trebali drugacije citati, kao do kraja retka ili staviti ulaz = str(input())+"\n"
                             #stavila sam ovu drugu opciju i cini mi se da radi kak treba ~Dora
             lex.zanemari()
         elif znak == '[':
@@ -149,7 +149,7 @@ def bilj(lex):
 # nesto_cvjetno -> FLOWERF | GENSEKV | LAT_NAZ
 # gen_dist -> cvjetni_clan |  gen_dist ED cvjetni_clan
 # closest -> cvjetni_clan |  closest CMP cvjetni_clan
-# sql -> SQLINSERT LAT_NAZ SQLINSERT FLOWERF SQLINSERT GENSEKV 
+# sql -> SQLINSERT LAT_NAZ SQLINSERT FLOWERF SQLINSERT GENSEKV
 # cvjetni_clan -> GENSEKV | LAT_NAZ | FLOWERVAR | FLOWERF
 # aritm -> član | aritm PLUS član | aritm MINUS član
 # član -> faktor | član ZVJEZDICA faktor
@@ -229,14 +229,14 @@ class P(Parser):
                     p >> T.OO
                     dat = p >> T.DAT
                     p >> T.OZ
-                    return PridruziIzDat(dat,ime) 
+                    return PridruziIzDat(dat,ime)
                 else:
                     return Pridruživanje(ime, p.tipa(ime))
             else:
                 return p.petlja(ime)
-        elif p > T.VO: 
+        elif p > T.VO:
             return p.blok()
-        elif p >= T.RET: 
+        elif p >= T.RET:
             return Vrati(p.imef)
         elif p >= T.SQLINSERT:
             prvi = p >> T.LAT_NAZ
@@ -253,7 +253,7 @@ class P(Parser):
                 p >> T.OO
                 dat = p >> T.DAT
                 p >> T.OZ
-                return PridruziIzDat(dat,ime) 
+                return PridruziIzDat(dat,ime)
             else:
                 return Pridruživanje(ime, p.tipa(ime))
         elif p > T.FLOWERVAR:
@@ -275,8 +275,8 @@ class P(Parser):
             elif p > T.ED:
                 return p.gen_dist(ime)
             elif p > T.CMP:
-                return p.closest(ime)    
-        else: #preostaje jedino CMP ili ED 
+                return p.closest(ime)
+        else: #preostaje jedino CMP ili ED
             cvjetni = p.nesto_cvjetno()
             if p > T.ED:
                 return p.gen_dist(cvjetni)
@@ -328,12 +328,12 @@ class P(Parser):
         p >> T.VZ
         p >= T.NR
         return Blok.ili_samo(n)
-        
+
     def argumenti(p, parametri) -> 'tipa*':
         arg = []
         p >> T.OO
         for i, parametar in enumerate(parametri):
-            if i: 
+            if i:
                 p >> T.ZAREZ
             arg.append(p.tipa(parametar))
         p >> T.OZ
@@ -342,11 +342,11 @@ class P(Parser):
     def aritm(p) -> 'Zbroj|član':
         članovi = [p.član()]
         while ...:
-            if pp := p >= T.PLUS: 
+            if pp := p >= T.PLUS:
                 članovi.append(p.član())
-            elif pp := p >= T.MINUS: 
+            elif pp := p >= T.MINUS:
                 članovi.append(Suprotan(p.član()))
-            else: 
+            else:
                 return Zbroj.ili_samo(članovi)
 
     def član(p) -> 'Umnožak|faktor':
@@ -355,7 +355,7 @@ class P(Parser):
         return Umnožak.ili_samo(faktori)
 
     def faktor(p) -> 'Suprotan|Poziv|aritm|BROJ':
-        if p >= T.MINUS: 
+        if p >= T.MINUS:
             return Suprotan(p.faktor())
         elif call := p >= T.IME:
             if call in p.funkcije:
@@ -374,7 +374,7 @@ class P(Parser):
                 return SurfaceArea(calc)
             else:
                 return SurfaceArea(p.nesto_cvjetno())
-        else: 
+        else:
             return p >> T.BROJ
 
 def izvrši(funkcije, *argv):
@@ -386,7 +386,7 @@ def izvrši(funkcije, *argv):
 #          Blok: naredbe:[naredba]
 #          Pridruživanje: ime:AIME|LIME pridruženo:izraz
 #          UpisiUDat: imeDat:dat ime:ime
-#          PridruziIzDat: ime:ime imeDat:dat 
+#          PridruziIzDat: ime:ime imeDat:dat
 #          Insert: prvi:LAT_NAZ drugi:FLOWERF treci:GENSEKV
 #          Closest: flowers:[nesto_cvjetno]
 #          Distance: flowers:[nesto_cvjetno]
@@ -430,7 +430,7 @@ class Create(AST):
         pristup = rt.imena[naredba.tablica] = Memorija(redefinicija=False)
         for stupac in naredba.specifikacije:
             pristup[stupac.ime] = PristupLog(stupac)
-            
+
 class Insert(AST):
     prvi: 'LAT_NAZ'
     drugi: 'FLOWERF'
@@ -439,7 +439,7 @@ class Insert(AST):
         print("insert")
 
 class Closest(AST):
-    flowers: 'nesto_cvjetno*' 
+    flowers: 'nesto_cvjetno*'
     def izvrši(self,mem,unutar):
         genKodovi=[] #lista genetskih kodova koje usporedujemo
         for cvijet in self.flowers:
@@ -454,7 +454,7 @@ class Closest(AST):
                                     broj=i
                                     break
                                 i+=1
-                            if broj==-1 raise GreškaIzvođenja('Ne postoji objekt' + cvijet + 'u tablici')
+                            if broj==-1: raise GreškaIzvođenja('Ne postoji objekt' + cvijet + 'u tablici')
                         elif stupac=="GS":
                             brojac=0
                             for thing in pristup.objekt.rows:
@@ -462,7 +462,7 @@ class Closest(AST):
                                     genKodovi.append(thing)
                                     break
                                 brojac+=1
-                
+
             elif "K" in cvijet: #imamo cvijetnu fomulu
                 broj=-1
                 for tablica,log in rt.imena:
@@ -474,7 +474,7 @@ class Closest(AST):
                                     broj=i
                                     break
                                 i+=1
-                            if broj==-1 raise GreškaIzvođenja('Ne postoji objekt' + cvijet + 'u tablici')
+                            if broj==-1: raise GreškaIzvođenja('Ne postoji objekt' + cvijet + 'u tablici')
                         elif stupac=="GS":
                             brojac=0
                             for thing in pristup.objekt.rows:
@@ -483,8 +483,8 @@ class Closest(AST):
                                     break
                                 brojac+=1
             else: #imamo genetski kod
-                genKodovi.append(cvijet)  
-                     
+                genKodovi.append(cvijet)
+
         l=min(genKodovi,len) #duljina najkraceg genetskog koda
         maks=0 #max broj gena koji se podudaraju
         for i in range(1,len(self.flowers)):
@@ -495,8 +495,8 @@ class Closest(AST):
                     if(brojac>maks):
                        cvijet1=self.flowers[0]
                        cvijet2=self.flowers[i]
-        return cvijet1+" "+cvijet2 #ne znam sta bi ovdje vracala, pa neka za sada bude ovo    
-                                
+        return cvijet1+" "+cvijet2 #ne znam sta bi ovdje vracala, pa neka za sada bude ovo
+
 class Distance(AST):
     flowers: 'nesto_cvjetno*'
     def izvrši(self,mem,unutar):
@@ -513,7 +513,7 @@ class Distance(AST):
                                     broj=i
                                     break
                                 i+=1
-                            if broj==-1 raise GreškaIzvođenja('Ne postoji objekt' + cvijet + 'u tablici')
+                            if broj==-1: raise GreškaIzvođenja('Ne postoji objekt' + cvijet + 'u tablici')
                         elif stupac=="GS":
                             brojac=0
                             for thing in pristup.objekt.rows:
@@ -521,7 +521,7 @@ class Distance(AST):
                                     genKodovi.append(thing)
                                     break
                                 brojac+=1
-                
+
             elif "K" in cvijet: #imamo cvijetnu fomulu
                 broj=-1
                 for tablica,log in rt.imena:
@@ -533,7 +533,7 @@ class Distance(AST):
                                     broj=i
                                     break
                                 i+=1
-                            if broj==-1 raise GreškaIzvođenja('Ne postoji objekt' + cvijet + 'u tablici')
+                            if broj==-1: raise GreškaIzvođenja('Ne postoji objekt' + cvijet + 'u tablici')
                         elif stupac=="GS":
                             brojac=0
                             for thing in pristup.objekt.rows:
@@ -543,7 +543,7 @@ class Distance(AST):
                                 brojac+=1
             else: #imamo genetski kod
                 genKodovi.append(cvijet)
-            
+
         l=min(genKodovi,len) #duljina najkraceg genetskog koda
         maks=0 #max broj gena koji se podudaraju
         for i in range(0,len(self.flowers)):
@@ -619,11 +619,11 @@ class Zbroj(AST):
     pribrojnici: 'aritm*'
     def vrijednost(zbroj, mem, unutar):
         return sum(p.vrijednost(mem, unutar) for p in zbroj.pribrojnici)
-    
+
 class Suprotan(AST):
     od: 'aritm'
     def vrijednost(self, mem, unutar): return -self.od.vrijednost(mem, unutar)
-    
+
 class Umnožak(AST):
     faktori: 'aritm*'
     def vrijednost(umnožak, mem, unutar):
@@ -647,7 +647,7 @@ stupci.append(Stupac("GS", "GENSEKV", geni))
 Create("Botanika", stupci).razriješi()
 #for tablica, log in rt.imena:
  #   print('Tablica', tablica, '- stupci:')
- #   for stupac, pristup in log: 
+ #   for stupac, pristup in log:
   #      print('\t', stupac, pristup)
   #      for thing in pristup.objekt.rows: ##prolazak po rows
     #        print('\t', thing)
@@ -679,7 +679,7 @@ $num1 = surf €cvijet
 $num = ~ €cvijet
 $var{$k=$k+1}
 datw("dat.txt",€cvijet)
-$num1 = datread("dat.txt") 
+$num1 = datread("dat.txt")
 }
 ''')"""
 
@@ -695,7 +695,7 @@ while 1:
         if i == ";":
             bilj(ukupni)
             ukupni = ""  """
-                
+
 ### Beskontekstna gramatika:
 
 ### Apstraktna sintaksna stabla (i njihovi atributi):
