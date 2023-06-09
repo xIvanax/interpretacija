@@ -439,14 +439,123 @@ class Insert(AST):
         print("insert")
 
 class Closest(AST):
-    flowers: 'nesto_cvjetno*'
-    def izvrši(closest, mem, unutar):
-        print("closest")
-
-class Distance(AST):
     flowers: 'nesto_cvjetno*' 
-    def izvrši(distance, mem, unutar):
-        print("distance")
+    def izvrši(self,mem,unutar):
+        genKodovi=[] #lista genetskih kodova koje usporedujemo
+        for cvijet in self.flowers:
+            if " " in cvijet: #imamo latinski naziv
+                broj=-1
+                for tablica,log in rt.imena:
+                    for stupac,pristup in log:
+                        if stupac=="LN": #svakako dolazi prije stupca GS
+                            i=0
+                            for thing in pristup.objekt.rows:
+                                if thing==cvijet:
+                                    broj=i
+                                    break
+                                i+=1
+                            if broj==-1 raise GreškaIzvođenja('Ne postoji objekt' + cvijet + 'u tablici')
+                        elif stupac=="GS":
+                            brojac=0
+                            for thing in pristup.objekt.rows:
+                                if(brojac==broj):
+                                    genKodovi.append(thing)
+                                    break
+                                brojac+=1
+                
+            elif "K" in cvijet: #imamo cvijetnu fomulu
+                broj=-1
+                for tablica,log in rt.imena:
+                    for stupac,pristup in log:
+                        if stupac=="FF": #svakako dolazi prije stupca GS
+                            i=0
+                            for thing in pristup.objekt.rows:
+                                if thing==cvijet:
+                                    broj=i
+                                    break
+                                i+=1
+                            if broj==-1 raise GreškaIzvođenja('Ne postoji objekt' + cvijet + 'u tablici')
+                        elif stupac=="GS":
+                            brojac=0
+                            for thing in pristup.objekt.rows:
+                                if(brojac==broj):
+                                    genKodovi.append(thing)
+                                    break
+                                brojac+=1
+            else: #imamo genetski kod
+                genKodovi.append(cvijet)  
+                     
+        l=min(genKodovi,len) #duljina najkraceg genetskog koda
+        maks=0 #max broj gena koji se podudaraju
+        for i in range(1,len(self.flowers)):
+            brojac=0
+            for k in range(0,l):
+                if(genKodovi[i][k]==genKodovi[0][k]):
+                    brojac+=1
+                    if(brojac>maks):
+                       cvijet1=self.flowers[0]
+                       cvijet2=self.flowers[i]
+        return cvijet1+" "+cvijet2 #ne znam sta bi ovdje vracala, pa neka za sada bude ovo    
+                                
+class Distance(AST):
+    flowers: 'nesto_cvjetno*'
+    def izvrši(self,mem,unutar):
+        genKodovi=[] #lista genetskih kodova koje usporedujemo
+        for cvijet in self.flowers:
+            if " " in cvijet: #imamo latinski naziv
+                broj=-1
+                for tablica,log in rt.imena:
+                    for stupac,pristup in log:
+                        if stupac=="LN": #svakako dolazi prije stupca GS
+                            i=0
+                            for thing in pristup.objekt.rows:
+                                if thing==cvijet:
+                                    broj=i
+                                    break
+                                i+=1
+                            if broj==-1 raise GreškaIzvođenja('Ne postoji objekt' + cvijet + 'u tablici')
+                        elif stupac=="GS":
+                            brojac=0
+                            for thing in pristup.objekt.rows:
+                                if(brojac==broj):
+                                    genKodovi.append(thing)
+                                    break
+                                brojac+=1
+                
+            elif "K" in cvijet: #imamo cvijetnu fomulu
+                broj=-1
+                for tablica,log in rt.imena:
+                    for stupac,pristup in log:
+                        if stupac=="FF": #svakako dolazi prije stupca GS
+                            i=0
+                            for thing in pristup.objekt.rows:
+                                if thing==cvijet:
+                                    broj=i
+                                    break
+                                i+=1
+                            if broj==-1 raise GreškaIzvođenja('Ne postoji objekt' + cvijet + 'u tablici')
+                        elif stupac=="GS":
+                            brojac=0
+                            for thing in pristup.objekt.rows:
+                                if(brojac==broj):
+                                    genKodovi.append(thing)
+                                    break
+                                brojac+=1
+            else: #imamo genetski kod
+                genKodovi.append(cvijet)
+            
+        l=min(genKodovi,len) #duljina najkraceg genetskog koda
+        maks=0 #max broj gena koji se podudaraju
+        for i in range(0,len(self.flowers)):
+            brojac=0
+            for j in range(i+1,len(self.flowers)): #ne usporedujem cvijet sam sa sobom
+                for k in range(0,l):
+                    if(genKodovi[i][k]==genKodovi[j][k]):
+                        brojac+=1
+                        if(brojac>maks):
+                           cvijet1=self.flowers[i]
+                           cvijet2=self.flowers[j]
+        return cvijet1+" "+cvijet2 #ne znam sta bi ovdje vracala, pa neka za sada bude ovo
 
 class SurfaceArea(AST):
     flower: 'nesto_cvjetno'
