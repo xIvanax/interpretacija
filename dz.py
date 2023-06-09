@@ -7,8 +7,8 @@ Sto omogucavamo i kako:
     3) for petlja (npr. $var{$k = $k + 1} -> znaci da se €var puta izvrši naredba $k = $k+1)
     4) definicije funkcija (npr. plus(a, b){ret a+b})
     5) funkcijski poziv (od definicije se razlikuje po tome sto nakon oble zagrade ne dode vitica)
-    6) operator ~ (alias surf) koristi se za dobivanje površine cvijeta t.d. se stavi surf €cvijet Ili
-    surf Rosa rubiginosa
+    6) operator ~ (alias pet) koristi se za dobivanje površine cvijeta t.d. se stavi pet €cvijet Ili
+        pet Rosa rubiginosa
     7) print u datoteku pomocu kljucne rijeci 'datw'
     8) citanje iz datoteke pomocu kljucne rijeci 'datread'
     9) konacni tip podataka (flower formula
@@ -19,7 +19,7 @@ Sto omogucavamo i kako:
     8) operator ? (alias ed) koristi se za racunanje genetske udaljenosti(evolutionary distance);
         to je višemjesni operator sto znaci da se moze pozvati na proizvoljno mnogo biljaka;
         tim biljkama ce se genomi usporedivati do duljine biljke s najkracim genomom i
-        vratit ce se one dvije biljke s najmanjom razlikom; kao i surf moze se pozvati na varijablama
+        vratit ce se one dvije biljke s najmanjom razlikom; kao i pet moze se pozvati na varijablama
         ili latinskim nazivima
     9) operator ß (alias cmp) koristi se za pronalazak genetski najblizeg cvijeta;
         ubiginosa
@@ -46,7 +46,7 @@ class T(TipoviTokena):
     DATO, DATC = 'dato', 'datc' #otvori/zatvori dadodedu
     DATW, DATREAD = 'datw', 'datread' #pisi/citaj dadodedu
     EOL = ";" #kraj unosa
-    SURF = '~'
+    PET = '~'
     NR = "\n"
     #ideja:     #mislim da je ovo bolji nacin, jer time omogucavamo koristenje vise datoteka istovremeno
     #dato("abc.txt") -mozda nepotrebno
@@ -126,8 +126,8 @@ def bilj(lex):
             yield lex.token(T.GENSEKV)
         else:
             lex * str.isalpha
-            if lex.sadržaj == "surf":
-                yield lex.token(T.SURF)
+            if lex.sadržaj == "pet":
+                yield lex.token(T.PET)
             elif lex.sadržaj == "cmp":
                 yield lex.token(T.CMP)
             elif lex.sadržaj == "ed":
@@ -153,7 +153,7 @@ def bilj(lex):
 # cvjetni_clan -> GENSEKV | LAT_NAZ | FLOWERVAR | FLOWERF
 # aritm -> član | aritm PLUS član | aritm MINUS član
 # član -> faktor | član ZVJEZDICA faktor
-# faktor -> BROJ | NUMVAR | IME poziv | OO aritm OZ | MINUS faktor | SURF FLOWERVAR | SURF nesto_cvjetno
+# faktor -> BROJ | NUMVAR | IME poziv | OO aritm OZ | MINUS faktor | PET FLOWERVAR | PET nesto_cvjetno
 # poziv -> OO OZ | OO argumenti OZ
 # argumenti -> argument | argumenti ZAREZ argument
 # argument -> nesto_cvjetno | BROJ
@@ -386,11 +386,11 @@ class P(Parser):
             return u_zagradi
         elif toEvaluate := p >= T.NUMVAR:
             return toEvaluate
-        elif p >= T.SURF:
+        elif p >= T.PET:
             if calc := p >= T.FLOWERVAR:
-                return SurfaceArea(calc)
+                return Petal(calc)
             else:
-                return SurfaceArea(p.nesto_cvjetno())
+                return Petal(p.nesto_cvjetno())
         else:
             return p >> T.BROJ
 
@@ -460,7 +460,7 @@ class Insert(AST):
     prvi: 'LAT_NAZ'
     drugi: 'FLOWERF'
     treci: 'GENSEKV'
-    def izvrši(insert, mem, unutar):
+    def izvrši(self, mem, unutar):
         for tablica,log in rt.imena:
             for stupac,pristup in log:
                 if stupac=="LN": 
@@ -471,6 +471,8 @@ class Insert(AST):
                     pristup.objekt.rows.append(self.treci.vrijednost(mem,unutar)[1:len(self.treci.vrijednost(mem,unutar))]) #jer se ucita i %
         return #ne znam sta bi tu returnala, valjda nista
 
+#!!!!Pitanje za Floral Formula: hocemo li omoguciti unos beskonacnosti i ako da kojim znakom? 
+#Treba prepraviti onda navedeno -Dorotea
 class Closest(AST):
     flowers: 'nesto_cvjetno*'
     def izvrši(self,mem,unutar):
@@ -498,7 +500,7 @@ class Closest(AST):
                                     break
                                 brojac+=1
                 
-            elif "K" in cvijet.vrijednost(mem,unutar): #imamo cvijetnu fomulu
+            elif "[" in cvijet.vrijednost(mem,unutar): #imamo cvijetnu fomulu 
                 broj=-1
                 for tablica,log in rt.imena:
                     for stupac,pristup in log:
@@ -533,8 +535,9 @@ class Closest(AST):
                     if(brojac>maks):
                         maks=brojac
                         cvijet2=self.flowers[j]
-
+        print(cvijet1.vrijednost(mem,unutar)+" "+cvijet2.vrijednost(mem,unutar))
         return cvijet1.vrijednost(mem,unutar)+" "+cvijet2.vrijednost(mem,unutar) #ne znam sta bi ovdje vracala, pa neka za sada bude ovo
+        #mozda za vrijednost koju vracamo mozemo staviti indeks cvijeta koji je najslicniji prvome?
 
 class Distance(AST):
     flowers: 'nesto_cvjetno*'
@@ -563,7 +566,7 @@ class Distance(AST):
                                     break
                                 brojac+=1
                 
-            elif "K" in cvijet.vrijednost(mem,unutar): #imamo cvijetnu fomulu
+            elif "[" in cvijet.vrijednost(mem,unutar): #imamo cvijetnu fomulu
                 broj=-1
                 for tablica,log in rt.imena:
                     for stupac,pristup in log:
@@ -603,12 +606,63 @@ class Distance(AST):
                             
         return cvijet1.vrijednost(mem,unutar)+" "+cvijet2.vrijednost(mem,unutar) #ne znam sta bi ovdje vracala, pa neka za sada bude ovo
 
-class SurfaceArea(AST):
+class Petal(AST):
     flower: 'nesto_cvjetno'
-    def izvrši(surf, mem, unutar):
-        print("")
-    def vrijednost(poziv, mem, unutar):
-        return 1##stavljen ovaj return samo za testiranje
+    def vrijednost(self, mem, unutar):
+        ff=""
+        if " " in self.flower.vrijednost(mem,unutar): #imamo latinski naziv
+            #trazimo koje po redu u stupcu je self.flower.vrijednost(mem,unutar) kako bi mogli uzeti genetski kod iz istog reda
+            broj=-1
+            for tablica,log in rt.imena:
+                for stupac,pristup in log:
+                    if stupac=="LN": #svakako dolazi prije stupca GS
+                        i=0
+                        for thing in pristup.objekt.rows:
+                            if thing==self.flower.vrijednost(mem,unutar):
+                                broj=i
+                                break
+                            i+=1
+                        if broj==-1:
+                            raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
+                    elif stupac=="FF":
+                        brojac=0
+                        for thing in pristup.objekt.rows:
+                            if(brojac==broj):
+                                ff=thing
+                                break
+                            brojac+=1   
+        elif "[" in self.flower.vrijednost(mem,unutar): #imamo cvijetnu fomulu
+            ff=self.flower.vrijednost(mem,unutar)
+        else: 
+            broj=-1
+            for tablica,log in rt.imena:
+                for stupac,pristup in log:
+                    if stupac=="GS":
+                        i=0
+                        for thing in pristup.objekt.rows:
+                            if thing==self.flower.vrijednost(mem,unutar):
+                                broj=i
+                                break
+                            i+=1
+                        if broj==-1:
+                            raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
+            for tablica,log in rt.imena:
+                for stupac,pristup in log:
+                    if stupac=="FF":
+                        brojac=0
+                        for thing in pristup.objekt.rows:
+                            if(brojac==broj):
+                                ff=thing
+                                break
+                            brojac+=1
+        p=ff.find("C")
+        #raim pod pretpostavkom da su brojevi najvise dvoznamenkasti
+        if ff[p+2].isalpha():
+            print(int(ff[p+1]))
+            return int(ff[p+1])   
+        else:
+            print(int(ff[p+1]+ff[p+2]))
+            return int(ff[p+1]+ff[p+2])
 
 class OneLine(AST):
     ime: 'linija'
@@ -704,20 +758,20 @@ Create("Botanika", stupci).razriješi()
 
 #isprobavanje parsera:
 
-proba = P('''#komentar
+""" proba = P('''#komentar
 ->Rosa rubiginosa->[K5C5AG10]->%ATGCTGACGTACGTTA
 €cvijet = Rosa rubiginosa
 datw("dat1.txt",€cvijet)
-€cvijet ? Rosa rubiginosa ? Rosa rugosa
+
 €cvijet ß Rosa rubiginosa ß Rosa rugosa
-$num1 = surf €cvijet
+$num1 = pet €cvijet
 $num2 = ~ €cvijet
 $k = 0
 $num1{$k = $k + 1}
 datw("dat2.txt","aa")
 €geni = %ATGCTGACGTACGTTA
 €formula = [K5C5AG10]
-''')
+''') """
 prikaz(proba, 5)
 izvrši(proba) #kad skuzimo kak unosit naredbe u terminal, naredba izvrši je ta koja (surprise) izvršava
 
@@ -726,7 +780,7 @@ bilj('''#komentar
 program(){
 ->Rosa rubiginosa->[K5C5AG10]->ATGCTGACGTACGTTA
 €cvijet = Rosa rubiginosa
-$num1 = surf €cvijet
+$num1 = pet €cvijet
 €cvijet ? Rosa rubiginosa ? Rosa rugosa
 $num = ~ €cvijet
 $var{$k=$k+1}
