@@ -73,7 +73,7 @@ class T(TipoviTokena):
         def vrijednost(self, mem, unutar): return self.sadržaj
     class DAT(Token): #ime datoteke
         def vrijednost(self, mem, unutar): return self.sadržaj
-    class SQLIME(Token): #za osposobljavanje sql-a
+    class SQLSTR(Token): #za osposobljavanje sql-a
         def vrijednost(self, mem, unutar): return self.sadržaj
 
 @lexer
@@ -136,7 +136,7 @@ def bilj(lex):
                 yield lex.literal_ili(T.IME) #ako nije nis drugo, onda je literal
 
 ###BKG
-# program -> funkcija | funkcija program
+# program -> funkcija | funkcija program | naredba | nareda program
 # funkcija -> IME OO parametri? OZ VO naredba VZ
 # parametri -> ime | parametri ZAREZ ime | nesto_cvjetno | parametri ZAREZ nesto_cvjetno        #*** za sada nije omogueno da druga funkcija bude parametar funkcije
 # ime -> NUMVAR | FLOWERVAR
@@ -168,14 +168,23 @@ def bilj(lex):
 class P(Parser):
     def program(p) -> 'Memorija':
         p.funkcije = Memorija(redefinicija=False)
+        p.funkcije['program'] = p.gp() #služi kao main, uspjela sam implementirati da izvana ne mora pisati program() {ovdje sve ostalo}, ali ne znam kak tu izmjenu uskladit s gramatikom t.d. gramatika i ovo sta sam implementirala bude ekvivalentno
         while not p > KRAJ:
-            if p > T.IME:
-                funkcija = p.funkcija()
-                p.funkcije[funkcija.ime] = funkcija
-            else:
-                print("naredba:")
-                naredba = p.naredba()
+            while p > T.NR:
+                p >> T.NR
+            if not p > KRAJ:
+                if p > T.IME:
+                    funkcija = p.funkcija()
+                    p.funkcije[funkcija.ime] = funkcija
+                else:
+                    naredba = p.naredba()
         return p.funkcije
+
+    def gp(p) -> 'Funkcija':
+        while p > T.NR:
+            p >> T.NR
+        atributi = p.imef, p.parametrif = "program", []
+        return Funkcija(*atributi, p.blok(1))
 
     def funkcija(p) -> 'Funkcija':
         p >= T.NR
@@ -216,7 +225,10 @@ class P(Parser):
             p >> T.OO
             dat = p >> T.DAT
             p >> T.ZAREZ
-            unos = p.ime()
+            if p > {T.NUMVAR, T.FLOWERVAR}:
+                unos = p.ime()
+            else:
+                unos = p >> T.DAT
             p >> T.OZ
             return UpisiUDat(dat, unos)
         elif p > T.NUMVAR:
@@ -235,9 +247,12 @@ class P(Parser):
             else:
                 return p.petlja(ime)
         elif p > T.VO:
-            return p.blok()
+            return p.blok(0)
         elif p >= T.RET:
-            return Vrati(p.imef)
+            if p > {T.NUMVAR, T.FLOWERVAR}:
+                return Vrati(p.tipa(p.ime()))
+            else:
+                return Vrati(p >> T.BROJ) #fja zasad moze vracati ili broj ili varijablu - treba li omouciti jos neke povratne tipove? -Ivana
         elif p >= T.SQLINSERT:
             prvi = p >> T.LAT_NAZ
             p >> T.SQLINSERT
@@ -258,9 +273,7 @@ class P(Parser):
                 return Pridruživanje(ime, p.tipa(ime))
         elif p > T.FLOWERVAR:
             ime = p.ime()
-            print(ime)
             if p > T.JEDN:
-                print(" = ")
                 p >> T.JEDN
                 if p > T.DATREAD:
                     p >> T.DATREAD
@@ -270,7 +283,6 @@ class P(Parser):
                     return PridruziIzDat(ime,dat)
                 else:
                     t = p.tipa(ime)
-                    print(t)
                     return Pridruživanje(ime, t)
             elif p > T.ED:
                 return p.gen_dist(ime)
@@ -316,18 +328,23 @@ class P(Parser):
         p >> T.VZ
         return Petlja(kolikoPuta, izvrsiti)
 
-    def blok(p) -> 'Blok|naredba':
+    def blok(p, num) -> 'Blok|naredba':
         p >= T.NR
-        p >> T.VO
-        if p >= T.VZ: return Blok([])
-        n = [p.naredba()]
-        print("blok")
-        while p >= T.NR and not p > T.VZ:
-            print("Flag")
-            n.append(p.naredba())
-        p >> T.VZ
-        p >= T.NR
-        return Blok.ili_samo(n)
+        if num == 0:#normalni blok
+            p >> T.VO
+            if p >= T.VZ: return Blok([])
+            n = [p.naredba()]
+            while p >= T.NR and not p > T.VZ:
+                n.append(p.naredba())
+            p >> T.VZ
+            p >= T.NR
+            return Blok.ili_samo(n)
+        else: #blok za glavni program (main)
+            if p > KRAJ: return Blok([])
+            n = [p.naredba()]
+            while p >= T.NR and not p > KRAJ:
+                n.append(p.naredba())
+            return Blok.ili_samo(n)
 
     def argumenti(p, parametri) -> 'tipa*':
         arg = []
@@ -378,7 +395,8 @@ class P(Parser):
             return p >> T.BROJ
 
 def izvrši(funkcije, *argv):
-    print('Program je vratio:', funkcije['program'].pozovi(argv))
+    funkcije['program'].pozovi(argv)
+    print('Program je uspješno završio')
 
 ### AST
 # Funkcija: ime: IME parametri:[NUMVAR|FLOWERVAR|nesto_cvjetno] tijelo:naredba
@@ -396,14 +414,21 @@ def izvrši(funkcije, *argv):
 #               Umnožak: faktori:[aritm]
 #        Poziv: funkcija:Funkcija? argumenti:[izraz]
 
-class UpisiUDat(AST):
+class UpisiUDat(AST): #omoguceno upisivanje bilo cega (broja, varijable, stringa...), svaki put kad opet pise u datoteku ono sto je prije pisalo u datoteci se prebrise, ne znam jel to zelimo ili ne
     imeDat: 'DAT'
     unos: 'IME'
     def izvrši(self, mem, unutar):
         cistoIme = self.imeDat.vrijednost(mem, unutar)
         novoIme = cistoIme[1:len(cistoIme) - 1] #uklonjeni navodnici iz imena kako bi se mogao izvrsiti open
         f = open(novoIme, 'w+')
-        f.write(self.unos.vrijednost(mem, unutar))
+        string = str(self.unos.vrijednost(mem, unutar))
+        provjeraNavodnika = string.find('"')
+        if provjeraNavodnika != -1:
+            string = string[1:len(string)]
+            drugiNavodnik = string.find('"')
+            if drugiNavodnik != -1:
+                string = string[0:len(string)-1]
+        f.write(string)
         f.close()
 
 class PridruziIzDat(AST):
@@ -436,25 +461,27 @@ class Insert(AST):
     drugi: 'FLOWERF'
     treci: 'GENSEKV'
     def izvrši(insert, mem, unutar):
-        print("insert")
+        print("")
 
 class Closest(AST):
     flowers: 'nesto_cvjetno*'
     def izvrši(self,mem,unutar):
         genKodovi=[] #lista genetskih kodova koje usporedujemo
         for cvijet in self.flowers:
-            if " " in cvijet: #imamo latinski naziv
+            if " " in cvijet.vrijednost(mem,unutar): #imamo latinski naziv
+                #trazimo koje po redu u stupcu je cvijet.vrijednost(mem,unutar) kako bi mogli uzeti genetski kod iz istog reda
                 broj=-1
                 for tablica,log in rt.imena:
                     for stupac,pristup in log:
                         if stupac=="LN": #svakako dolazi prije stupca GS
                             i=0
                             for thing in pristup.objekt.rows:
-                                if thing==cvijet:
+                                if thing==cvijet.vrijednost(mem,unutar):
                                     broj=i
                                     break
                                 i+=1
-                            if broj==-1: raise GreškaIzvođenja('Ne postoji objekt' + cvijet + 'u tablici')
+                            if broj==-1:
+                                raise GreškaIzvođenja('Ne postoji objekt ' + cvijet.vrijednost(mem,unutar) + ' u tablici')
                         elif stupac=="GS":
                             brojac=0
                             for thing in pristup.objekt.rows:
@@ -462,19 +489,20 @@ class Closest(AST):
                                     genKodovi.append(thing)
                                     break
                                 brojac+=1
-
-            elif "K" in cvijet: #imamo cvijetnu fomulu
+                
+            elif "K" in cvijet.vrijednost(mem,unutar): #imamo cvijetnu fomulu
                 broj=-1
                 for tablica,log in rt.imena:
                     for stupac,pristup in log:
                         if stupac=="FF": #svakako dolazi prije stupca GS
                             i=0
                             for thing in pristup.objekt.rows:
-                                if thing==cvijet:
+                                if thing==cvijet.vrijednost(mem,unutar):
                                     broj=i
                                     break
                                 i+=1
-                            if broj==-1: raise GreškaIzvođenja('Ne postoji objekt' + cvijet + 'u tablici')
+                            if broj==-1:
+                                raise GreškaIzvođenja('Ne postoji objekt' + cvijet.vrijednost(mem,unutar) + ' u tablici')
                         elif stupac=="GS":
                             brojac=0
                             for thing in pristup.objekt.rows:
@@ -483,37 +511,42 @@ class Closest(AST):
                                     break
                                 brojac+=1
             else: #imamo genetski kod
-                genKodovi.append(cvijet)
-
-        l=min(genKodovi,len) #duljina najkraceg genetskog koda
+                genKodovi.append(cvijet.vrijednost(mem,unutar))
+        
+        l=len(min(genKodovi,key=len)) #duljina najkraceg genetskog koda
         maks=0 #max broj gena koji se podudaraju
-        for i in range(1,len(self.flowers)):
+        cvijet1=self.flowers[0]
+        cvijet2=""
+        for j in range(1,len(self.flowers)): #ne usporedujemo cvijet sam sa sobom
             brojac=0
             for k in range(0,l):
-                if(genKodovi[i][k]==genKodovi[0][k]):
+                if(genKodovi[0][k]==genKodovi[j][k]):
                     brojac+=1
                     if(brojac>maks):
-                       cvijet1=self.flowers[0]
-                       cvijet2=self.flowers[i]
-        return cvijet1+" "+cvijet2 #ne znam sta bi ovdje vracala, pa neka za sada bude ovo
+                        maks=brojac
+                        cvijet2=self.flowers[j]
+
+        return cvijet1.vrijednost(mem,unutar)+" "+cvijet2.vrijednost(mem,unutar) #ne znam sta bi ovdje vracala, pa neka za sada bude ovo
 
 class Distance(AST):
     flowers: 'nesto_cvjetno*'
     def izvrši(self,mem,unutar):
         genKodovi=[] #lista genetskih kodova koje usporedujemo
         for cvijet in self.flowers:
-            if " " in cvijet: #imamo latinski naziv
+            if " " in cvijet.vrijednost(mem,unutar): #imamo latinski naziv
+                #trazimo koje po redu u stupcu je cvijet.vrijednost(mem,unutar) kako bi mogli uzeti genetski kod iz istog reda
                 broj=-1
                 for tablica,log in rt.imena:
                     for stupac,pristup in log:
                         if stupac=="LN": #svakako dolazi prije stupca GS
                             i=0
                             for thing in pristup.objekt.rows:
-                                if thing==cvijet:
+                                if thing==cvijet.vrijednost(mem,unutar):
                                     broj=i
                                     break
                                 i+=1
-                            if broj==-1: raise GreškaIzvođenja('Ne postoji objekt' + cvijet + 'u tablici')
+                            if broj==-1:
+                                raise GreškaIzvođenja('Ne postoji objekt ' + cvijet.vrijednost(mem,unutar) + ' u tablici')
                         elif stupac=="GS":
                             brojac=0
                             for thing in pristup.objekt.rows:
@@ -521,19 +554,20 @@ class Distance(AST):
                                     genKodovi.append(thing)
                                     break
                                 brojac+=1
-
-            elif "K" in cvijet: #imamo cvijetnu fomulu
+                
+            elif "K" in cvijet.vrijednost(mem,unutar): #imamo cvijetnu fomulu
                 broj=-1
                 for tablica,log in rt.imena:
                     for stupac,pristup in log:
                         if stupac=="FF": #svakako dolazi prije stupca GS
                             i=0
                             for thing in pristup.objekt.rows:
-                                if thing==cvijet:
+                                if thing==cvijet.vrijednost(mem,unutar):
                                     broj=i
                                     break
                                 i+=1
-                            if broj==-1: raise GreškaIzvođenja('Ne postoji objekt' + cvijet + 'u tablici')
+                            if broj==-1:
+                                raise GreškaIzvođenja('Ne postoji objekt' + cvijet.vrijednost(mem,unutar) + ' u tablici')
                         elif stupac=="GS":
                             brojac=0
                             for thing in pristup.objekt.rows:
@@ -542,30 +576,37 @@ class Distance(AST):
                                     break
                                 brojac+=1
             else: #imamo genetski kod
-                genKodovi.append(cvijet)
-
-        l=min(genKodovi,len) #duljina najkraceg genetskog koda
+                genKodovi.append(cvijet.vrijednost(mem,unutar))
+            
+        l=len(min(genKodovi,key=len)) #duljina najkraceg genetskog koda
         maks=0 #max broj gena koji se podudaraju
-        for i in range(0,len(self.flowers)):
-            brojac=0
-            for j in range(i+1,len(self.flowers)): #ne usporedujem cvijet sam sa sobom
+        cvijet1=""
+        cvijet2=""
+        for i in range(len(self.flowers)):
+            for j in range(i+1,len(self.flowers)): #ne usporedujemo cvijet sam sa sobom
+                brojac=0
                 for k in range(0,l):
                     if(genKodovi[i][k]==genKodovi[j][k]):
                         brojac+=1
                         if(brojac>maks):
-                           cvijet1=self.flowers[i]
-                           cvijet2=self.flowers[j]
-        return cvijet1+" "+cvijet2 #ne znam sta bi ovdje vracala, pa neka za sada bude ovo
+                            maks=brojac
+                            cvijet1=self.flowers[i]
+                            cvijet2=self.flowers[j]
+                            
+        return cvijet1.vrijednost(mem,unutar)+" "+cvijet2.vrijednost(mem,unutar) #ne znam sta bi ovdje vracala, pa neka za sada bude ovo
 
 class SurfaceArea(AST):
     flower: 'nesto_cvjetno'
     def izvrši(surf, mem, unutar):
-        print("surf")
+        print("")
+    def vrijednost(poziv, mem, unutar):
+        return 1##stavljen ovaj return samo za testiranje
+
 class OneLine(AST):
     ime: 'linija'
     tijelo: 'naredba'
     def izvrši(onelie, mem, unutar):
-        print("onelie")
+        print("")
 
 class Funkcija(AST):
     ime: 'IME'
@@ -575,7 +616,9 @@ class Funkcija(AST):
         lokalni = Memorija(zip(funkcija.parametri, argumenti))
         try: funkcija.tijelo.izvrši(mem=lokalni, unutar=funkcija)
         except Povratak as exc: return exc.preneseno
-        else: raise GreškaIzvođenja(f'{funkcija.ime} nije ništa vratila')
+        else: 
+            if funkcija.ime != "program":
+                raise GreškaIzvođenja(f'{funkcija.ime} nije ništa vratila')
 
 class Poziv(AST):
     funkcija: 'Funkcija?'
@@ -596,7 +639,7 @@ class Petlja(AST):
     kolikoPuta: 'NUMVAR'
     izvrsiti: 'naredba'
     def izvrši(petlja, mem, unutar):
-        for i in range(kolikoPuta.vrijednost()):
+        for i in range(petlja.kolikoPuta.vrijednost(mem, unutar)):
             petlja.izvrsiti.izvrši(mem, unutar)
 
 class Blok(AST):
@@ -633,11 +676,10 @@ class Umnožak(AST):
 class Povratak(NelokalnaKontrolaToka): """Signal koji šalje naredba vrati."""
 
 #sql
-
 rt.imena = Memorija(redefinicija=False)
 nazivi = ["Rosa rubiginosa"]
 nazivi.append("Rosa rugosa")
-stupci = [Stupac("ln", "LAT_NAZ", nazivi)]
+stupci = [Stupac("LN", "LAT_NAZ", nazivi)]
 formule = ["[K5C5AG10]"]
 formule.append("[K5C2AG9]")
 stupci.append(Stupac("FF", "FLOWERF", formule))
@@ -655,20 +697,22 @@ Create("Botanika", stupci).razriješi()
 #isprobavanje parsera:
 
 proba = P('''#komentar
-program(){
 ->Rosa rubiginosa->[K5C5AG10]->%ATGCTGACGTACGTTA
 €cvijet = Rosa rubiginosa
-datw("dat.txt",€cvijet)
-$num1 = surf €cvijet
+datw("dat1.txt",€cvijet)
 €cvijet ? Rosa rubiginosa ? Rosa rugosa
+€cvijet ß Rosa rubiginosa ß Rosa rugosa
+$num1 = surf €cvijet
 $num2 = ~ €cvijet
-$var{$k = $k + 1}
+$k = 0
+$num1{$k = $k + 1}
+datw("dat2.txt","aa")
 €geni = %ATGCTGACGTACGTTA
 €formula = [K5C5AG10]
-}
 ''')
 prikaz(proba, 5)
-izvrši(proba)
+izvrši(proba) #kad skuzimo kak unosit naredbe u terminal, naredba izvrši je ta koja (surprise) izvršava
+
 """
 bilj('''#komentar
 program(){
@@ -683,9 +727,6 @@ $num1 = datread("dat.txt")
 }
 ''')"""
 
-""" prikaz(P('datw("dat.txt",€cvijet)')) """
-
-
 ###treba otkomentirati za unos kroz terminal
 """ ukupni = ""
 while 1:
@@ -695,7 +736,3 @@ while 1:
         if i == ";":
             bilj(ukupni)
             ukupni = ""  """
-
-### Beskontekstna gramatika:
-
-### Apstraktna sintaksna stabla (i njihovi atributi):
