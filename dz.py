@@ -461,7 +461,15 @@ class Insert(AST):
     drugi: 'FLOWERF'
     treci: 'GENSEKV'
     def izvrši(insert, mem, unutar):
-        print("")
+        for tablica,log in rt.imena:
+            for stupac,pristup in log:
+                if stupac=="LN": 
+                    pristup.objekt.rows.append(self.prvi.vrijednost(mem,unutar))
+                elif stupac=="FF":
+                    pristup.objekt.rows.append(self.drugi.vrijednost(mem,unutar))
+                elif stupac=="GS":
+                    pristup.objekt.rows.append(self.treci.vrijednost(mem,unutar)[1:len(self.treci.vrijednost(mem,unutar))]) #jer se ucita i %
+        return #ne znam sta bi tu returnala, valjda nista
 
 class Closest(AST):
     flowers: 'nesto_cvjetno*'
