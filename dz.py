@@ -57,6 +57,7 @@ class T(TipoviTokena):
     PLUS, MINUS, PUTA, KROZ, ZAREZ = '+-*/,'
     OO, OZ, VO, VZ, UO, UZ = '(){}[]' #OO = obla otvorena
     SQLINSERT = '->'
+    SQLFETCH = '<-'
     class LAT_NAZ(Token): #latinski naziv sukulenta, prva rijec pocinje velikim slovom, druga malim
         def vrijednost(self, mem, unutar): return self.sadržaj
     class BROJ(Token):
@@ -118,6 +119,9 @@ def bilj(lex):
                 yield lex.token(T.SQLINSERT)
             else:
                 yield lex.token(T.MINUS)
+        elif znak == '<':
+            lex >= '-'
+            yield lex.token(T.SQLFETCH)
         elif znak == '"':
             lex - '"'
             yield lex.token(T.DAT)
@@ -260,6 +264,9 @@ class P(Parser):
             p >> T.SQLINSERT
             treci = p >> T.GENSEKV
             return Insert(prvi, drugi, treci)
+        elif p >= T.SQLFETCH:
+            podatak = p >> { T.LAT_NAZ, T.FLOWERF, T.GENSEKV} #mora biti nesto cvjetno
+            return Fetch(podatak)
         elif p > T.NUMVAR:
             ime = p.ime()
             p >> T.JEDN
@@ -461,15 +468,130 @@ class Insert(AST):
     drugi: 'FLOWERF'
     treci: 'GENSEKV'
     def izvrši(self, mem, unutar):
+        #prvo provjeravamo nalazi li se podatak koji se pokusava unjet u tablici
+        provjera=False
         for tablica,log in rt.imena:
-            for stupac,pristup in log:
-                if stupac=="LN": 
-                    pristup.objekt.rows.append(self.prvi.vrijednost(mem,unutar))
-                elif stupac=="FF":
-                    pristup.objekt.rows.append(self.drugi.vrijednost(mem,unutar))
-                elif stupac=="GS":
-                    pristup.objekt.rows.append(self.treci.vrijednost(mem,unutar)[1:len(self.treci.vrijednost(mem,unutar))]) #jer se ucita i %
-        return #ne znam sta bi tu returnala, valjda nista
+                for stupac,pristup in log:
+                    if stupac=="LN":
+                        for thing in pristup.objekt.rows:
+                            if thing==self.prvi.vrijednost(mem,unutar):
+                                provjera=True
+                                break
+                            i+=1
+        if(provjera==False):
+            for tablica,log in rt.imena:
+                for stupac,pristup in log:
+                    if stupac=="LN": 
+                        pristup.objekt.rows.append(self.prvi.vrijednost(mem,unutar))
+                    elif stupac=="FF":
+                        pristup.objekt.rows.append(self.drugi.vrijednost(mem,unutar))
+                    elif stupac=="GS":
+                        pristup.objekt.rows.append(self.treci.vrijednost(mem,unutar)[1:len(self.treci.vrijednost(mem,unutar))]) #jer se ucita i %
+            return #ne znam sta bi tu returnala, valjda nista
+        return
+
+class Fetch(AST):
+    flower: 'IME'
+    def izvrši(self,mem,unutar):
+        ln=""
+        ff=""
+        gs=""
+        if " " in self.flower.vrijednost(mem,unutar): #korisnik je unio latinski naziv
+            ln=self.flower.vrijednost(mem,unutar)
+            broj=-1
+            for tablica,log in rt.imena:
+                for stupac,pristup in log:
+                    if stupac=="LN":
+                        i=0
+                        for thing in pristup.objekt.rows:
+                            if thing==self.flower.vrijednost(mem,unutar):
+                                broj=i
+                                break
+                            i+=1
+                        if broj==-1:
+                            raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
+                    elif stupac=="FF":
+                        brojac=0
+                        for thing in pristup.objekt.rows:
+                            if(brojac==broj):
+                                ff=thing
+                                break
+                            brojac+=1 
+                    elif stupac=="GS":
+                        brojac=0
+                        for thing in pristup.objekt.rows:
+                            if(brojac==broj):
+                                gs=thing
+                                break
+                            brojac+=1
+                          
+        elif "[" in self.flower.vrijednost(mem,unutar): #imamo cvijetnu fomulu
+            ff=self.flower.vrijednost(mem,unutar)
+            broj=-1
+            for tablica,log in rt.imena:
+                for stupac,pristup in log:
+                    if stupac=="FF":
+                        i=0
+                        for thing in pristup.objekt.rows:
+                            if thing==self.flower.vrijednost(mem,unutar):
+                                broj=i
+                                break
+                            i+=1
+                        if broj==-1:
+                            raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
+                    else:
+                        continue
+                    
+            for tablica,log in rt.imena:
+                for stupac,pristup in log:
+                    if stupac=="LN":
+                        brojac=0
+                        for thing in pristup.objekt.rows:
+                            if(brojac==broj):
+                                ln=thing
+                                break
+                            brojac+=1
+                    elif stupac=="GS":
+                        brojac=0
+                        for thing in pristup.objekt.rows:
+                            if(brojac==broj):
+                                gs=thing
+                                break
+                            brojac+=1 
+                            
+        else: #imamo genetski kod
+            broj=-1
+            gs=self.flower.vrijednost(mem,unutar)
+            for tablica,log in rt.imena:
+                for stupac,pristup in log:
+                    if stupac=="GS":
+                        i=0
+                        for thing in pristup.objekt.rows:
+                            if thing==self.flower.vrijednost(mem,unutar):
+                                broj=i
+                                break
+                            i+=1
+                        if broj==-1:
+                            raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
+            for tablica,log in rt.imena:
+                for stupac,pristup in log:
+                    if stupac=="LN":
+                        brojac=0
+                        for thing in pristup.objekt.rows:
+                            if(brojac==broj):
+                                ln=thing
+                                break
+                            brojac+=1
+                    elif stupac=="FF":
+                        brojac=0
+                        for thing in pristup.objekt.rows:
+                            if(brojac==broj):
+                                ff=thing
+                                break
+                            brojac+=1
+        
+        print(ln+" "+ff+" "+gs)
+        return #opet valjda nis ne returnam, samo printam
 
 #!!!!Pitanje za Floral Formula: hocemo li omoguciti unos beskonacnosti i ako da kojim znakom? 
 #Treba prepraviti onda navedeno -Dorotea
@@ -749,12 +871,12 @@ geni = ["ATGCTGACGTACGTTA"]
 geni.append("ATGACGCTGTACGTTA")
 stupci.append(Stupac("GS", "GENSEKV", geni))
 Create("Botanika", stupci).razriješi()
-#for tablica, log in rt.imena:
- #   print('Tablica', tablica, '- stupci:')
- #   for stupac, pristup in log:
-  #      print('\t', stupac, pristup)
-  #      for thing in pristup.objekt.rows: ##prolazak po rows
-    #        print('\t', thing)
+""" for tablica, log in rt.imena:
+    print('Tablica', tablica, '- stupci:')
+    for stupac, pristup in log:
+        print('\t', stupac, pristup)
+        for thing in pristup.objekt.rows: ##prolazak po rows
+            print('\t', thing) """
 
 #isprobavanje parsera:
 
@@ -772,8 +894,9 @@ datw("dat2.txt","aa")
 €geni = %ATGCTGACGTACGTTA
 €formula = [K5C5AG10]
 ''') """
-prikaz(proba, 5)
-izvrši(proba) #kad skuzimo kak unosit naredbe u terminal, naredba izvrši je ta koja (surprise) izvršava
+
+""" prikaz(proba, 5)
+izvrši(proba) """ #kad skuzimo kak unosit naredbe u terminal, naredba izvrši je ta koja (surprise) izvršava
 
 """
 bilj('''#komentar
