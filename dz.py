@@ -211,9 +211,9 @@ def bilj(lex):
             else:
                 yield lex.literal_ili(T.IME) #ako nije nis drugo, onda je literal
 
-bilj('''
+"""bilj('''
 €formula = [Bt1K5C5A1G>]
-''')
+''')"""
 
 ###BKG
 # program -> funkcija | funkcija program | naredba | naredba program                            #ne znam je li gramatika u skladu s parserom
@@ -246,23 +246,12 @@ bilj('''
 class P(Parser):
     def program(p) -> 'Memorija':
         p.funkcije = Memorija(redefinicija=False)
-        p.funkcije['program'] = p.gp() #služi kao main, uspjela sam implementirati da izvana ne mora pisati program() {ovdje sve ostalo}, ali ne znam kak tu izmjenu uskladit s gramatikom t.d. gramatika i ovo sta sam implementirala bude ekvivalentno
         while not p > KRAJ:
-            while p > T.NR:
-                p >> T.NR
-            if not p > KRAJ:
-                if p > T.IME:
-                    funkcija = p.funkcija()
-                    p.funkcije[funkcija.ime] = funkcija
-                else:
-                    naredba = p.naredba()
+            print("uocio sam funkciju")
+            funkcija = p.funkcija()
+            print("obradio sam funkciju")
+            p.funkcije[funkcija.ime] = funkcija
         return p.funkcije
-
-    def gp(p) -> 'Funkcija':
-        while p > T.NR:
-            p >> T.NR
-        atributi = p.imef, p.parametrif = "program", []
-        return Funkcija(*atributi, p.blok(1))
 
     def funkcija(p) -> 'Funkcija':
         p >= T.NR
@@ -303,32 +292,33 @@ class P(Parser):
             p >> T.OO
             dat = p >> T.DAT
             p >> T.ZAREZ
-            if p > {T.NUMVAR, T.FLOWERVAR}:
-                unos = p.ime()
-            else:
-                unos = p >> T.DAT
+            unos = p.ime()
             p >> T.OZ
             return UpisiUDat(dat, unos)
         elif p > T.NUMVAR:
-            p >= T.NR
+            p >= T.NR 
+            print("naletila na numvar i pridr")
             ime = p.ime()
             if p > T.JEDN:
+                print("jednako")
                 p >> T.JEDN
                 if p > T.DATREAD:
                     p >> T.DATREAD
                     p >> T.OO
                     dat = p >> T.DAT
                     p >> T.OZ
-                    return PridruziIzDat(dat,ime)
+                    return PridruziIzDat(dat,ime) 
                 else:
                     return Pridruživanje(ime, p.tipa(ime))
             else:
                 return p.petlja(ime)
-        elif p > T.VO:
-            return p.blok(0)
-        elif p >= T.RET:
-            if p > {T.NUMVAR, T.FLOWERVAR}:
-                return Vrati(p.tipa(p.ime()))
+        elif p > T.VO: 
+            return p.blok()
+        elif p >= T.RET: 
+            if a := p >= T.NUMVAR:
+                return Vrati(a)
+            elif b := p >= T.FLOWERVAR:
+                return Vrati(b)
             else:
                 return Vrati(p >> T.BROJ) #fja zasad moze vracati ili broj ili varijablu - treba li omouciti jos neke povratne tipove? -Ivana
         elif p >= T.SQLINSERT:
@@ -338,20 +328,6 @@ class P(Parser):
             p >> T.SQLINSERT
             treci = p >> T.GENSEKV
             return Insert(prvi, drugi, treci)
-        elif p >= T.SQLFETCH:
-            podatak = p >> { T.LAT_NAZ, T.FLOWERF, T.GENSEKV} #mora biti nesto cvjetno
-            return Fetch(podatak)
-        elif p > T.NUMVAR:
-            ime = p.ime()
-            p >> T.JEDN
-            if p > T.DATREAD:
-                p >> T.DATREAD
-                p >> T.OO
-                dat = p >> T.DAT
-                p >> T.OZ
-                return PridruziIzDat(dat,ime)
-            else:
-                return Pridruživanje(ime, p.tipa(ime))
         elif p > T.FLOWERVAR:
             ime = p.ime()
             if p > T.JEDN:
@@ -363,13 +339,12 @@ class P(Parser):
                     p >> T.OZ
                     return PridruziIzDat(ime,dat)
                 else:
-                    t = p.tipa(ime)
-                    return Pridruživanje(ime, t)
+                    return Pridruživanje(ime, p.tipa(ime))
             elif p > T.ED:
                 return p.gen_dist(ime)
             elif p > T.CMP:
-                return p.closest(ime)
-        else: #preostaje jedino CMP ili ED
+                return p.closest(ime)    
+        else: #preostaje jedino CMP ili ED 
             cvjetni = p.nesto_cvjetno()
             if p > T.ED:
                 return p.gen_dist(cvjetni)
@@ -409,29 +384,22 @@ class P(Parser):
         p >> T.VZ
         return Petlja(kolikoPuta, izvrsiti)
 
-    def blok(p, num) -> 'Blok|naredba':
+    def blok(p) -> 'Blok|naredba':
         p >= T.NR
-        if num == 0:#normalni blok
-            p >> T.VO
-            if p >= T.VZ: return Blok([])
-            n = [p.naredba()]
-            while p >= T.NR and not p > T.VZ:
-                n.append(p.naredba())
-            p >> T.VZ
-            p >= T.NR
-            return Blok.ili_samo(n)
-        else: #blok za glavni program (main)
-            if p > KRAJ: return Blok([])
-            n = [p.naredba()]
-            while p >= T.NR and not p > KRAJ:
-                n.append(p.naredba())
-            return Blok.ili_samo(n)
-
+        p >> T.VO
+        if p >= T.VZ: return Blok([])
+        n = [p.naredba()]
+        while p >= T.NR and not p > T.VZ:
+            n.append(p.naredba())
+        p >> T.VZ
+        p >= T.NR
+        return Blok.ili_samo(n)
+        
     def argumenti(p, parametri) -> 'tipa*':
         arg = []
         p >> T.OO
         for i, parametar in enumerate(parametri):
-            if i:
+            if i: 
                 p >> T.ZAREZ
             arg.append(p.tipa(parametar))
         p >> T.OZ
@@ -440,11 +408,11 @@ class P(Parser):
     def aritm(p) -> 'Zbroj|član':
         članovi = [p.član()]
         while ...:
-            if pp := p >= T.PLUS:
+            if pp := p >= T.PLUS: 
                 članovi.append(p.član())
-            elif pp := p >= T.MINUS:
+            elif pp := p >= T.MINUS: 
                 članovi.append(Suprotan(p.član()))
-            else:
+            else: 
                 return Zbroj.ili_samo(članovi)
 
     def član(p) -> 'Umnožak|faktor':
@@ -453,13 +421,13 @@ class P(Parser):
         return Umnožak.ili_samo(faktori)
 
     def faktor(p) -> 'Suprotan|Poziv|aritm|BROJ':
-        if p >= T.MINUS:
+        if p >= T.MINUS: 
             return Suprotan(p.faktor())
         elif call := p >= T.IME:
             if call in p.funkcije:
-                funkcija = p.funkcije[ime]
+                funkcija = p.funkcije[call]
                 return Poziv(funkcija, p.argumenti(funkcija.parametri))
-            else:
+            elif ime == p.imef:
                 return Poziv(nenavedeno, p.argumenti(p.parametrif))
         elif p >= T.OO:
             u_zagradi = p.aritm()
@@ -472,7 +440,7 @@ class P(Parser):
                 return Petal(calc)
             else:
                 return Petal(p.nesto_cvjetno())
-        else:
+        else: 
             return p >> T.BROJ
 
 def izvrši(funkcije, *argv):
@@ -874,7 +842,7 @@ class Funkcija(AST):
         try: funkcija.tijelo.izvrši(mem=lokalni, unutar=funkcija)
         except Povratak as exc: return exc.preneseno
         else: 
-            if funkcija.ime != "program":
+            if str(funkcija.ime)[4:len(str(funkcija.ime))-1] != "program":
                 raise GreškaIzvođenja(f'{funkcija.ime} nije ništa vratila')
 
 class Poziv(AST):
@@ -952,23 +920,64 @@ Create("Botanika", stupci).razriješi()
             print('\t', thing) """
 
 #isprobavanje parsera:
-"""
 proba = P('''#komentar
-->Rosa rubiginosa->[K5C5AG10]->%ATGCTGACGTACGTTA
-€cvijet = Rosa rubiginosa
-datw("dat1.txt",€cvijet)
-€najblizi = €cvijet ß Rosa rubiginosa ß Rosa rugosa
-$num1 = pet €cvijet
-$num2 = ~ €cvijet
-$k = 0
-$num1{$k = $k + 1}
-datw("dat2.txt","aa")
-€geni = %ATGCTGACGTACGTTA
-€formula = [K5C5AG10]
-''') """
+zb($a,$b){
+    datw("dat.txt",$a)
+    datw("dat2.txt",$b)
+    $c = $a + $b
+    ret $c
+}
+program(){
+$a = 1
+$b = 2
+$rezz = 0
+$rezz = zb($a,$b)
+datw("dat1.txt", $rezz)
+}
+''')
+"""proba = P('''#komentar
+program(){
+$a=1
+$b=2
+zb($a,$b){
+    datw("dat.txt",$a)
+    datw("dat2.txt",$b)
+    $c = $a + $b
+    ret $c
+}
+ret 0
+}
+''')""" #ovaj ne radiiiii
+"""proba = P('''#komentar
+program(){
+$a=1
+$b=2
+ret 0
+}
+zb($a,$b){
+    datw("dat.txt",$a)
+    datw("dat2.txt",$b)
+    $c = $a + $b
+    ret $c
+}
+''')"""#ovaj primjer radi!!!
 
-""" prikaz(proba, 5)
-izvrši(proba) """ #kad skuzimo kak unosit naredbe u terminal, naredba izvrši je ta koja (surprise) izvršava
+"""proba = P('''#komentar
+program(){
+->Rosa rubiginosa->[Bt1K5C5A1G>]->%ATGCTGACGTACGTTA
+€cvijet = Rosa rubiginosa
+datw("dat.txt",€cvijet)
+$num1 = pet €cvijet
+€cvijet ? Rosa rubiginosa ? Rosa rugosa
+$num2 = ~ €cvijet
+$num1{$num2 = $num2 + 1}
+€geni = %ATGCTGACGTACGTTA
+€formula = [Bt1K5C5A1G>]
+ret 0
+}
+''')""" #ovaj primjer radi!!!
+prikaz(proba, 5)
+izvrši(proba) #kad skuzimo kak unosit naredbe u terminal, naredba izvrši je ta koja (surprise) izvršava
 
 """
 bilj('''#komentar
@@ -987,10 +996,16 @@ $num1 = datread("dat.txt")
 ###treba otkomentirati za unos kroz terminal
 """ukupni = ""
 while 1:
-    ulaz = str(input())+"\n" #nadodala sam ovdje +"\n" kao sto sam gore komentirala i cini mi se okej ~Dora
+    ulaz = str(input())+"\n"
     ukupni +=ulaz
     for i in ulaz:
         if i == ";":
-            bilj(ukupni)
+            print("----------------------")
+            ukupni = ukupni[:-1]
+            ukupni = ukupni[:-1]
+            ukupni = ukupni
+            print(ukupni)
+            par = P(ukupni)
+            izvrši(par)
             ukupni = ""
-"""
+            """
