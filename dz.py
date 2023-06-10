@@ -37,22 +37,26 @@ import os
 from vepar import *
 from backend import PristupLog
 
+def ffControl(lex):
+    if not lex > '>':
+        if lex >= '1':
+            if lex > {'3', '4', '5', '6', '7', '8', '9'}:
+                string = "First formulation option:\n\tBracts(optional): 'B'\n\tBracteoles(optional): 'Bt'\n\tTepals: 'P' or 'CaCo'\n\tStamens: 'A'\n\tCarpels: 'G'\n\tOvules(optional): 'V' or 'O'\n"
+                string += "Second formulation option:\n\tBracts(optional): 'B'\n\tBracteoles(optional): 'Bt'\n\tSepals and petals: 'K' or 'Ca' and then 'C' or 'Co'\n\tStamens: 'A'\n\tCarpels: 'G'\n\tOvules(optional): 'V' or 'O'\n"
+                string += "Note that each label must be followed by a number between 1 and 12 or by the symbol '>' which means 'more than 12'"
+                raise LeksičkaGreška("Neispravno formulirana cvjetna formula. Proučite sljedeće upute za ispravnu formulaciju:\n"+string)
+            else:
+                lex >= {'0', '1', '2'}
+        else: lex >> {'2', '3', '4', '5', '6', '7', '8', '9'}
+    else:
+        lex >> '>'
+
 class T(TipoviTokena):
-    ZA = 'za' #for Petlja, eg:
-              #€var = 2, €k = 0
-              #za €var{k = k+1} --> k = 2
-    #FUNK = 'funk' #deklaracija funkcije eg: funk plus(a, b){ret a+b}
     RET = 'ret' #povratna vrijednost funkcije
-    DATO, DATC = 'dato', 'datc' #otvori/zatvori dadodedu
-    DATW, DATREAD = 'datw', 'datread' #pisi/citaj dadodedu
-    EOL = ";" #kraj unosa
-    PET = '~'
-    NR = "\n"
-    #ideja:     #mislim da je ovo bolji nacin, jer time omogucavamo koristenje vise datoteka istovremeno
-    #dato("abc.txt") -mozda nepotrebno
-    #datw("ime.txt","pqr")
-    #€var = datread("ime.txt") --> €var = "pqr"
-    #datc() -mozda nepotrebno
+    DATW, DATREAD = 'datw', 'datread' #pisi u datoteku/citaj datoteku
+    EOL = ";" #kraj unosa (bitno za terminal)
+    PET = '~' 
+    NR = "\n" #separator naredbi
     CMP, JEDN, ED, GEN = 'ß=?%'
     PLUS, MINUS, PUTA, KROZ, ZAREZ = '+-*/,'
     OO, OZ, VO, VZ, UO, UZ = '(){}[]' #OO = obla otvorena
@@ -64,13 +68,13 @@ class T(TipoviTokena):
         def vrijednost(self, mem, unutar): return int(self.sadržaj)
     class IME(Token): #ime fje
         def vrijednost(self, mem, unutar): return mem[self]
-    class NUMVAR(Token):
+    class NUMVAR(Token): #numerička varijabla
         def vrijednost(self, mem, unutar): return mem[self]
-    class FLOWERVAR(Token):
+    class FLOWERVAR(Token): #cvjetna varijabla (cvjetna formula, sekvenca dna ili latinski naziv)
         def vrijednost(self, mem, unutar): return mem[self]
-    class FLOWERF(Token):
+    class FLOWERF(Token): #cvjetna formula
         def vrijednost(self, mem, unutar): return self.sadržaj
-    class GENSEKV(Token):
+    class GENSEKV(Token): #sekvenca gena
         def vrijednost(self, mem, unutar): return self.sadržaj
     class DAT(Token): #ime datoteke
         def vrijednost(self, mem, unutar): return self.sadržaj
@@ -98,10 +102,10 @@ def bilj(lex):
                 yield lex.literal_ili(T.LAT_NAZ)
             else:   #sekvenca gena
                 yield lex.token(T.GENSEKV)
-        elif znak == '€':   #varijabla
+        elif znak == '€':   #cvjetna varijabla
             lex * str.isalnum
             yield lex.literal_ili(T.FLOWERVAR)
-        elif znak == '$':   #varijabla
+        elif znak == '$':   #numerička varijabla
             lex * str.isalnum
             yield lex.literal_ili(T.NUMVAR)
         elif znak == '#': #komentar po uzoru na primjer 09
@@ -112,8 +116,66 @@ def bilj(lex):
                             #stavila sam ovu drugu opciju i cini mi se da radi kak treba ~Dora
             lex.zanemari()
         elif znak == '[':
-            lex - ']'
-            yield lex.token(T.FLOWERF)
+            flag = 0
+            if poc1 := lex >= 'B': #bracts (optional)
+                if not lex > 't':
+                    ffControl(lex)
+                else:
+                    poc = lex >> 't'
+                    ffControl(lex)
+                    flag = 1
+            if flag == 0:
+                if lex >= 'B': #bracteoles (optional)
+                    poc = lex >> 't'
+                    ffControl(lex)
+            if lex > {'P', 'C'}: #tepals
+                if lex >= 'C':
+                    lex >> 'a'
+                    lex >> 'C'
+                    poc = lex >> 'o'
+                    ffControl(lex)
+                else:
+                    poc = lex >> 'P'
+                    ffControl(lex)
+                poc = lex >> 'A' #stamens
+                ffControl(lex)
+                poc = lex >> 'G' #carpels
+                ffControl(lex)
+                if poc1 := lex >= {'O', 'V'}: #ovules (optional)
+                    ffControl(lex)
+                    lex >> ']'
+                    yield lex.token(T.FLOWERF)
+                else:
+                    lex >> ']'
+                    yield lex.token(T.FLOWERF)
+            elif lex > {'K', 'C'}: #sepals and petals
+                if lex >= 'C':
+                    poc = lex >> 'a'
+                    ffControl(lex)
+                else:
+                    poc = lex >> 'K'
+                    ffControl(lex)
+                poc = lex >> 'C'
+                if poc1 := lex >= 'o':
+                    ffControl(lex)
+                else:
+                    ffControl(lex)
+                poc = lex >> 'A' #stamens
+                ffControl(lex)
+                poc = lex >> 'G' #carpels
+                ffControl(lex)
+                if poc1 := lex >= {'O', 'V'}: #ovules (optional)
+                    ffControl(lex)
+                    lex >> ']'
+                    yield lex.token(T.FLOWERF)
+                else:
+                    lex >> ']'
+                    yield lex.token(T.FLOWERF)
+            else:
+                string = "First formulation option:\n\tBracts(optional): 'B'\n\tBracteoles(optional): 'Bt'\n\tTepals: 'P' or 'CaCo'\n\tStamens: 'A'\n\tCarpels: 'G'\n\tOvules(optional): 'V' or 'O'\n"
+                string += "Second formulation option:\n\tBracts(optional): 'B'\n\tBracteoles(optional): 'Bt'\n\tSepals and petals: 'K' or 'Ca' and then 'C' or 'Co'\n\tStamens: 'A'\n\tCarpels: 'G'\n\tOvules(optional): 'V' or 'O'\n"
+                string += "Note that each label must be followed by a number between 1 and 12 or by the symbol '>' which means 'more than 12'"
+                raise LeksičkaGreška("Neispravno formulirana cvjetna formula. Proučite sljedeće upute za ispravnu formulaciju:\n"+string)
         elif znak == '-':
             if lex >= '>':
                 yield lex.token(T.SQLINSERT)
@@ -125,8 +187,18 @@ def bilj(lex):
         elif znak == '"':
             lex - '"'
             yield lex.token(T.DAT)
-        elif znak == '%':
-            lex * str.isalpha
+        elif znak == '%': #gen se smije sastojati samo od A, C, G, T
+            while not (lex > ' ' or lex > "\n"):
+                if lex > 'A':
+                    lex >> 'A'
+                elif lex > 'C':
+                    lex >> 'C'
+                elif lex > 'T':
+                    lex >> 'T'
+                elif lex > 'G':
+                    lex >> 'G'
+                else:
+                    raise LeksičkaGreška("U genu se nalazi nepostojeća nukleobaza. Postojeće nukleobaze su A, C, T i G.")
             yield lex.token(T.GENSEKV)
         else:
             lex * str.isalpha
@@ -139,13 +211,17 @@ def bilj(lex):
             else:
                 yield lex.literal_ili(T.IME) #ako nije nis drugo, onda je literal
 
+bilj('''
+€formula = [Bt1K5C5A1G>]
+''')
+
 ###BKG
-# program -> funkcija | funkcija program | naredba | nareda program
+# program -> funkcija | funkcija program | naredba | naredba program                            #ne znam je li gramatika u skladu s parserom
 # funkcija -> IME OO parametri? OZ VO naredba VZ
-# parametri -> ime | parametri ZAREZ ime | nesto_cvjetno | parametri ZAREZ nesto_cvjetno        #*** za sada nije omogueno da druga funkcija bude parametar funkcije
+# parametri -> ime | parametri ZAREZ ime | nesto_cvjetno | parametri ZAREZ nesto_cvjetno        #nije omoguceno da druga funkcija bude parametar funkcije
 # ime -> NUMVAR | FLOWERVAR
 # naredba -> pridruži | VO naredbe VZ | RET argument
-#         | gen_dist | closest | NUMVAR VO naredba VZ ##ovo zadnje je for petlja (treba omoguciti i da umjesto numvar pise samo broj)
+#         | gen_dist | closest | NUMVAR VO naredba VZ                                           ##ovo predzadnje je for petlja (treba omoguciti i da umjesto numvar pise samo broj)
 #         | sql | DATW OO DAT ZAREZ TEKST OZ | pridruziIzDat
 # naredbe -> naredba | naredbe NR naredba
 # pridruži -> NUMVAR JEDNAKO aritm | FLOWERVAR JEDNAKO nesto_cvjetno
@@ -163,9 +239,7 @@ def bilj(lex):
 # argument -> nesto_cvjetno | BROJ
 #
 # Mozemo biljku identificirati s bilo kojim od: cvjetna varijabla, lat naz, cvj form ili gen
-#(svaki od njih jedinstveno odreduje biljku) ako se pozove ed i proslijedi ko
-#parametar bilokoje od ta tri, convertamo u onaj u koji zelimo
-# (u bazi nekoj pisu trojke) i provedemo ed
+#   (svaki od njih jedinstveno odreduje biljku)
 
 
 ### Parsing time :,) -> dosta toga po uzoru na primjer 09
@@ -657,8 +731,7 @@ class Closest(AST):
                     if(brojac>maks):
                         maks=brojac
                         cvijet2=self.flowers[j]
-        print(cvijet1.vrijednost(mem,unutar)+" "+cvijet2.vrijednost(mem,unutar))
-        return cvijet1.vrijednost(mem,unutar)+" "+cvijet2.vrijednost(mem,unutar) #ne znam sta bi ovdje vracala, pa neka za sada bude ovo
+        return cvijet2.vrijednost(mem,unutar) #ne znam sta bi ovdje vracala, pa neka za sada bude ovo
         #mozda za vrijednost koju vracamo mozemo staviti indeks cvijeta koji je najslicniji prvome?
 
 class Distance(AST):
@@ -879,13 +952,12 @@ Create("Botanika", stupci).razriješi()
             print('\t', thing) """
 
 #isprobavanje parsera:
-
-""" proba = P('''#komentar
+"""
+proba = P('''#komentar
 ->Rosa rubiginosa->[K5C5AG10]->%ATGCTGACGTACGTTA
 €cvijet = Rosa rubiginosa
 datw("dat1.txt",€cvijet)
-
-€cvijet ß Rosa rubiginosa ß Rosa rugosa
+€najblizi = €cvijet ß Rosa rubiginosa ß Rosa rugosa
 $num1 = pet €cvijet
 $num2 = ~ €cvijet
 $k = 0
@@ -913,11 +985,12 @@ $num1 = datread("dat.txt")
 ''')"""
 
 ###treba otkomentirati za unos kroz terminal
-""" ukupni = ""
+"""ukupni = ""
 while 1:
     ulaz = str(input())+"\n" #nadodala sam ovdje +"\n" kao sto sam gore komentirala i cini mi se okej ~Dora
     ukupni +=ulaz
     for i in ulaz:
         if i == ";":
             bilj(ukupni)
-            ukupni = ""  """
+            ukupni = ""
+"""
