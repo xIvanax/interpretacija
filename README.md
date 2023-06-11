@@ -1,5 +1,5 @@
 # Ivana
-* napravila sam unos iz terminala na foru while petlje jer je sav unos u proslim zadacama tak funkcioniro pa je valjda oke
+* napravila sam unos iz terminala na foru while petlje jer je sav unos u proslim zadacama tak funkcioniro pa je valjda oke (iako ukljucuje dosta "varanja", ali nemam bolju ideju :( )
 * pushala sam datoteku proba.txt u kojoj mozete vidjeti sto sam tocno probavala upisati u terminal
 * funkcionira isto kao pythonov shell, znaci ak se unosi funkcija ona se pamti, a ak se unosi bilo sta drugo smatra se dijelom glavnom programa
 * unos ; oznacava da korisnik zeli izvršiti naredbu i nakon sto izvrsi neku naredbu moze opet izvrsavati naredbe (dakle korisnik moze u bilo kojem trenu definirati neku funkciju ili napisati naredbu, ima opciju izvršavanja naredbi jednu po jednu t.d. nakon svake upise ;, a moze i unositi proizvoljan broj naredbi)
