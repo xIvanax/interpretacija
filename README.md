@@ -1,4 +1,13 @@
-# interpretacija
+# Ivana
+* napravila sam unos iz terminala na foru while petlje jer je sav unos u proslim zadacama tak funkcioniro pa je valjda oke
+* pushala sam datoteku proba.txt u kojoj mozete vidjeti sto sam tocno probavala upisati u terminal
+* funkcionira isto kao pythonov shell, znaci ak se unosi funkcija ona se pamti, a ak se unosi bilo sta drugo smatra se dijelom glavnom programa
+* unos ; oznacava da korisnik zeli izvršiti naredbu i nakon sto izvrsi neku naredbu moze opet izvrsavati naredbe (dakle korisnik moze u bilo kojem trenu definirati neku funkciju ili napisati naredbu, ima opciju izvršavanja naredbi jednu po jednu t.d. nakon svake upise ;, a moze i unositi proizvoljan broj naredbi)
+* trenutne restrikcije koje bi vjv trebalo popraviti su: _ako vidite jos neke restrikcije zapisite ih/ako rijesite neke retsrikcije zapisite koje ste rijesili_
+  * poziv funkcije funkcionira samo ako se pridruzi nekoj varijabli i svaka funkcija mora nesto vratiti (osim main-a koji uvijek vrati 0)
+* __nisam testirala jos sto se tocno "smije" u smislu hoce li se program zaliti ako cvjetnoj varijabli probam pridruziti broj i slicno - mislim da bi bilo dobro da svi testiramo sve sta nam padne na pamet i da onda ovdje u section "Žalbe" napisemo sto smo testirali i sto valja/ne valja__
+# Žalbe
+# zadatak
 * Jezik mora podržavati sljedeće:
   * interaktivni način rada (korisnik utipkava naredbu po naredbu),
   * aritmetičke izraze s višemjesnim operatorima te varijable,
