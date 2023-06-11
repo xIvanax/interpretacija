@@ -4,10 +4,10 @@ Sto omogucavamo i kako:
         dozvoljeni su i prelasci u novi red, a kraj unošenja naredbi označava se pomoću ';')
     2) varijable (npr. €var -> kao sto bi u php-u imali $var; definiranje varijable bi bilo
         ovako: €cvijet = Rosa rubiginosa)
-    3) for petlja (npr. $var{$k = $k + 1} -> znaci da se €var puta izvrši naredba $k = $k+1)
+    3) for petlja (npr. $var{$k = $k + 1} -> znaci da se €var puta izvrši naredba $k = $k+1) - umjesto NUMVAR mozemo imati i obican broj
     4) definicije funkcija (npr. plus(a, b){ret a+b})
     5) funkcijski poziv (od definicije se razlikuje po tome sto nakon oble zagrade ne dode vitica)
-    6) operator ~ (alias pet) koristi se za dobivanje površine cvijeta t.d. se stavi pet €cvijet Ili
+    6) operator ~ (alias pet) koristi se za dobivanje broja latica cvijeta t.d. se stavi pet €cvijet Ili
         pet Rosa rubiginosa
     7) print u datoteku pomocu kljucne rijeci 'datw'
     8) citanje iz datoteke pomocu kljucne rijeci 'datread'
@@ -216,12 +216,12 @@ def bilj(lex):
 ''')"""
 
 ###BKG
-# program -> funkcija | funkcija program | naredba | naredba program                            #ne znam je li gramatika u skladu s parserom
+# program -> funkcija | funkcija program                          #ne znam je li gramatika u skladu s parserom
 # funkcija -> IME OO parametri? OZ VO naredba VZ
 # parametri -> ime | parametri ZAREZ ime | nesto_cvjetno | parametri ZAREZ nesto_cvjetno        #nije omoguceno da druga funkcija bude parametar funkcije
 # ime -> NUMVAR | FLOWERVAR
 # naredba -> pridruži | VO naredbe VZ | RET argument
-#         | gen_dist | closest | NUMVAR VO naredba VZ                                           ##ovo predzadnje je for petlja (treba omoguciti i da umjesto numvar pise samo broj)
+#         | gen_dist | closest | petlja
 #         | sql | DATW OO DAT ZAREZ TEKST OZ | pridruziIzDat
 # naredbe -> naredba | naredbe NR naredba
 # pridruži -> NUMVAR JEDNAKO aritm | FLOWERVAR JEDNAKO nesto_cvjetno
@@ -229,6 +229,7 @@ def bilj(lex):
 # nesto_cvjetno -> FLOWERF | GENSEKV | LAT_NAZ
 # gen_dist -> cvjetni_clan |  gen_dist ED cvjetni_clan
 # closest -> cvjetni_clan |  closest CMP cvjetni_clan
+# petlja -> NUMVAR VO naredba VZ | BROJ VO naredba VZ
 # sql -> SQLINSERT LAT_NAZ SQLINSERT FLOWERF SQLINSERT GENSEKV
 # cvjetni_clan -> GENSEKV | LAT_NAZ | FLOWERVAR | FLOWERF
 # aritm -> član | aritm PLUS član | aritm MINUS član
@@ -319,8 +320,10 @@ class P(Parser):
                 return Vrati(a)
             elif b := p >= T.FLOWERVAR:
                 return Vrati(b)
+            elif c := p >= {T.FLOWERF, T.GENSEKV, T.LAT_NAZ}:
+                return Vrati(c) #fja moze vracati varijablu, broj ili nesto_cvjetno, ali u svakom slucaju *mora* nesto vratiti
             else:
-                return Vrati(p >> T.BROJ) #fja zasad moze vracati ili broj ili varijablu - treba li omouciti jos neke povratne tipove? -Ivana
+                return Vrati(p >> T.BROJ)
         elif p >= T.SQLINSERT:
             prvi = p >> T.LAT_NAZ
             p >> T.SQLINSERT
@@ -343,7 +346,9 @@ class P(Parser):
             elif p > T.ED:
                 return p.gen_dist(ime)
             elif p > T.CMP:
-                return p.closest(ime)    
+                return p.closest(ime)  
+        elif p > T.BROJ:
+            return p.petlja(p >> T.BROJ)
         else: #preostaje jedino CMP ili ED 
             cvjetni = p.nesto_cvjetno()
             if p > T.ED:
@@ -949,8 +954,8 @@ zb($a,$b){
     ret $c
 }
 ''')"""#ovaj primjer radi!!!
-
-"""proba = P('''#komentar
+"""
+proba = P('''#komentar
 program(){
 ->Rosa rubiginosa->[Bt1K5C5A1G>]->%ATGCTGACGTACGTTA
 €cvijet = Rosa rubiginosa
@@ -958,16 +963,19 @@ datw("dat.txt",€cvijet)
 $num1 = pet €cvijet
 €cvijet ? Rosa rubiginosa ? Rosa rugosa
 $num2 = ~ €cvijet
-$num1{$num2 = $num2 + 1}
+$num3 = 1
+3{$num3 = $num3 + 1}
+datw("dat.txt",$num3)
 €geni = %ATGCTGACGTACGTTA
 €formula = [Bt1K5C5A1G>]
 ret 0
 }
-''')""" #ovaj primjer radi!!!
+''') """#ovaj primjer radi!!!
 #prikaz(proba, 5)
 #izvrši(proba) #kad skuzimo kak unosit naredbe u terminal, naredba izvrši je ta koja (surprise) izvršava
 
 ###treba otkomentirati za unos kroz terminal
+
 ukupni = "program(){\n"
 trenutni = ""
 funkcije = ""
@@ -978,8 +986,8 @@ while 1:
     #par = P(ulaz)
     #par.oneByOne()
     flag = 1
-    for i in ulaz:
-        if i == ";":#kraj programa
+    for i in range(0, len(ulaz)):
+        if ulaz[i] == ";":#kraj programa
             print("---funkcije---")
             print(funkcije)
             print("---main---")
@@ -990,7 +998,8 @@ while 1:
             par = P(cijeli)
             izvrši(par)
             trenutni = ""
-        elif i == '{':#pocetak definicije funkcije
+        elif ulaz[i] == ')' and ulaz[i + 1] == '{':#pocetak definicije funkcije
+            brVitica = 1  #sluzi za provjeru imamo li jednak broj otvorenih i zatvorenih vitica (jer se unutar funkcije moze naci for petlja)
             done = 0
             while done == 0:
                 print("...", end="")
@@ -998,13 +1007,16 @@ while 1:
                 trenutni += definiranje
                 for j in definiranje:
                     if j == "}":
-                        funkcije += trenutni
-                        trenutni = ""
-                        done = 1
-                        flag = 0
+                        brVitica = brVitica - 1
+                        if brVitica == 0:
+                            funkcije += trenutni
+                            trenutni = ""
+                            done = 1
+                            flag = 0
+                    elif j == '{':
+                        brVitica = brVitica + 1
     if flag==1:
         if ';' not in ulaz:
             main +=ulaz
-    trenutni = ""
-                        
+    trenutni = ""               
             
