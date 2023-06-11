@@ -920,7 +920,7 @@ Create("Botanika", stupci).razriješi()
             print('\t', thing) """
 
 #isprobavanje parsera:
-proba = P('''#komentar
+"""proba = P('''#komentar
 zb($a,$b){
     datw("dat.txt",$a)
     datw("dat2.txt",$b)
@@ -934,20 +934,8 @@ $rezz = 0
 $rezz = zb($a,$b)
 datw("dat1.txt", $rezz)
 }
-''')
-"""proba = P('''#komentar
-program(){
-$a=1
-$b=2
-zb($a,$b){
-    datw("dat.txt",$a)
-    datw("dat2.txt",$b)
-    $c = $a + $b
-    ret $c
-}
-ret 0
-}
-''')""" #ovaj ne radiiiii
+''')"""
+
 """proba = P('''#komentar
 program(){
 $a=1
@@ -976,36 +964,47 @@ $num1{$num2 = $num2 + 1}
 ret 0
 }
 ''')""" #ovaj primjer radi!!!
-prikaz(proba, 5)
-izvrši(proba) #kad skuzimo kak unosit naredbe u terminal, naredba izvrši je ta koja (surprise) izvršava
-
-"""
-bilj('''#komentar
-program(){
-->Rosa rubiginosa->[K5C5AG10]->ATGCTGACGTACGTTA
-€cvijet = Rosa rubiginosa
-$num1 = pet €cvijet
-€cvijet ? Rosa rubiginosa ? Rosa rugosa
-$num = ~ €cvijet
-$var{$k=$k+1}
-datw("dat.txt",€cvijet)
-$num1 = datread("dat.txt")
-}
-''')"""
+#prikaz(proba, 5)
+#izvrši(proba) #kad skuzimo kak unosit naredbe u terminal, naredba izvrši je ta koja (surprise) izvršava
 
 ###treba otkomentirati za unos kroz terminal
-"""ukupni = ""
+ukupni = "program(){\n"
+trenutni = ""
+funkcije = ""
+main = ""
 while 1:
     ulaz = str(input())+"\n"
-    ukupni +=ulaz
+    trenutni += ulaz
+    #par = P(ulaz)
+    #par.oneByOne()
+    flag = 1
     for i in ulaz:
-        if i == ";":
-            print("----------------------")
-            ukupni = ukupni[:-1]
-            ukupni = ukupni[:-1]
-            ukupni = ukupni
-            print(ukupni)
-            par = P(ukupni)
+        if i == ";":#kraj programa
+            print("---funkcije---")
+            print(funkcije)
+            print("---main---")
+            print(main)
+            print("---cijeli program---")
+            cijeli = funkcije + ukupni + main + '\nret 0\n}'
+            print(cijeli)
+            par = P(cijeli)
             izvrši(par)
-            ukupni = ""
-            """
+            trenutni = ""
+        elif i == '{':#pocetak definicije funkcije
+            done = 0
+            while done == 0:
+                print("...", end="")
+                definiranje = str(input())+"\n"
+                trenutni += definiranje
+                for j in definiranje:
+                    if j == "}":
+                        funkcije += trenutni
+                        trenutni = ""
+                        done = 1
+                        flag = 0
+    if flag==1:
+        if ';' not in ulaz:
+            main +=ulaz
+    trenutni = ""
+                        
+            

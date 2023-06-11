@@ -1,0 +1,66 @@
+ivana@HP840G1:~/HOME/ip/ip/PJ$ python3.11 -i dz.py
+$x = 2
+$y = 55
+;
+---funkcije---
+
+---main---
+$x = 2
+$y = 55
+
+---cijeli program---
+program(){
+$x = 2
+$y = 55
+
+ret 0
+}
+uocio sam funkciju
+naletila na numvar i pridr
+jednako
+naletila na numvar i pridr
+jednako
+obradio sam funkciju
+Program je uspješno završio
+f($z){
+...datw("dat1.txt", $z)
+...ret 0
+...}
+$c = f($y)
+;
+---funkcije---
+f($z){
+datw("dat1.txt", $z)
+ret 0
+}
+
+---main---
+$x = 2
+$y = 55
+$c = f($y)
+
+---cijeli program---
+f($z){
+datw("dat1.txt", $z)
+ret 0
+}
+program(){
+$x = 2
+$y = 55
+$c = f($y)
+
+ret 0
+}
+uocio sam funkciju
+obradio sam funkciju
+uocio sam funkciju
+naletila na numvar i pridr
+jednako
+naletila na numvar i pridr
+jednako
+naletila na numvar i pridr
+jednako
+obradio sam funkciju
+Program je uspješno završio
+
+[42]+  Stopped                 python3.11 -i dz.py
