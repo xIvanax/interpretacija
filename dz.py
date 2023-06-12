@@ -5,17 +5,10 @@ Sto omogucavamo i kako:
     2) varijable (npr. €var -> kao sto bi u php-u imali $var; definiranje varijable bi bilo
         ovako: €cvijet = Rosa rubiginosa)
     3) for petlja (npr. $var{$k = $k + 1} -> znaci da se €var puta izvrši naredba $k = $k+1) - umjesto NUMVAR mozemo imati i obican broj
-<<<<<<< HEAD
-    4) definicije funkcija (npr. plus(a, b){ret a+b})
-    5) funkcijski poziv (od definicije se razlikuje po tome sto nakon oble zagrade ne dode vitica)
-    6) operator ~ (alias info) koristi se za dobivanje površine cvijeta t.d. se stavi info €cvijet Ili
-        info Rosa rubiginosa
-=======
     4) definicije funkcija (npr. plus(a, b){ret a+b}) -> FUNKCIJA UVIJEK MORA ZAVRSITI S RET
     5) funkcijski poziv (od definicije se razlikuje po tome sto nakon oble zagrade ne dode vitica) -> mora se pridružiti nekoj varijabli (zasad)
     6) operator ~ (alias pet) koristi se za dobivanje broja latica cvijeta t.d. se stavi pet €cvijet Ili
         pet Rosa rubiginosa
->>>>>>> 50de33c (popravljeni neki buggovi i omogucene void fje i pozivi fja bez pridruzivanja varijabli)
     7) print u datoteku pomocu kljucne rijeci 'datw'
     8) citanje iz datoteke pomocu kljucne rijeci 'datread'
     9) konacni tip podataka (flower formula
@@ -1066,9 +1059,5 @@ while 1:
     if flag==1:
         if ';' not in ulaz:
             main +=ulaz
-<<<<<<< HEAD
-    trenutni = ""
-=======
     trenutni = ""               
             """
->>>>>>> 50de33c (popravljeni neki buggovi i omogucene void fje i pozivi fja bez pridruzivanja varijabli)
