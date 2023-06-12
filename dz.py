@@ -312,7 +312,7 @@ class P(Parser):
                     p >> T.OO
                     dat = p >> T.DAT
                     p >> T.OZ
-                    return PridruziIzDat(dat,ime) 
+                    return PridruziIzDat(ime, dat) 
                 else:
                     return Pridruživanje(ime, p.tipa(ime))
             else:
@@ -503,8 +503,12 @@ class UpisiUDat(AST): #omoguceno upisivanje bilo cega (broja, varijable, stringa
 class PridruziIzDat(AST):
     ime: 'IME'
     imeDat: 'DAT'
-    def izvrsi(self,mem,unutar):
-        f=open(self.imeDat.vrijednost(mem, unutar),'r')
+    def izvrši(self,mem,unutar):
+        cistoIme = self.imeDat.vrijednost(mem, unutar)
+        print("ime datoteke:")
+        print(self.imeDat)
+        novoIme = cistoIme[1:len(cistoIme) - 1] #uklonjeni navodnici iz imena kako bi se mogao izvrsiti open
+        f = open(novoIme, 'r')
         mem[self.ime] = f.read()
         f.close()
 
@@ -926,12 +930,15 @@ Create("Botanika", stupci).razriješi()
             print('\t', thing) """
 
 #isprobavanje parsera:
-"""proba = P('''#komentar
+proba = P('''#komentar
 program(){
-datw("dat.txt",1)
+datw("dat.txt",79)
+$x = 50
+$x = datread("dat.txt")
+datw("dat1.txt", $x)
 }
 ''')
-"""
+
 """
 bilj('''#komentar
 zb($a){
@@ -971,7 +978,7 @@ datw("dat1.txt", $rezz)
 }
 ''')"""
 
-
+"""
 proba = P('''#komentar
 program(){
 ->Rosa rubiginosa->[Bt1K5C5A1G>]->%ATGCTGACGTACGTTA
@@ -988,7 +995,7 @@ datw("dat.txt",$num3)
 ret 0
 }
 ''')
-
+"""
 prikaz(proba, 5)
 izvrši(proba) #naredba izvrši je ta koja pokrece
 """
