@@ -1,28 +1,35 @@
 '''
 Sto omogucavamo i kako:
     1) korisnik upisuje naredbu po naredbu (omoguceno pomocu while petlje na kraju koda;
-        dozvoljeni su i prelasci u novi red, a kraj unošenja naredbi označava se pomoću ';')
-    2) varijable (npr. €var -> kao sto bi u php-u imali $var; definiranje varijable bi bilo
-        ovako: €cvijet = Rosa rubiginosa)
-    3) for petlja (npr. $var{$k = $k + 1} -> znaci da se €var puta izvrši naredba $k = $k+1) - umjesto NUMVAR mozemo imati i obican broj
-    4) definicije funkcija (npr. plus(a, b){ret a+b}) -> FUNKCIJA UVIJEK MORA ZAVRSITI S RET
-    5) funkcijski poziv (od definicije se razlikuje po tome sto nakon oble zagrade ne dode vitica) -> mora se pridružiti nekoj varijabli (zasad)
-    6) operator ~ (alias pet) koristi se za dobivanje broja latica cvijeta t.d. se stavi pet €cvijet Ili
-        pet Rosa rubiginosa
-    7) print u datoteku pomocu kljucne rijeci 'datw'
-    8) citanje iz datoteke pomocu kljucne rijeci 'datread'
+        obavezni su prelasci u novi red, a kraj unošenja naredbi označava se pomoću ';' što
+        triggera izvršavanje do sad unesenih naredbi)
+    2) varijable (cvjetnog tipa se oznacavaju kao €varijabla, a numeričkog kao $var)
+    3) for petlja (npr. $var{$k = $k + 1} -> znaci da se €var puta izvrši naredba $k = $k+1);
+    umjesto NUMVAR mozemo imati i obican broj
+    4) definicije funkcija (npr. plus($a, $b){ret $a+$b}); fja uvijek mora završiti s ret, ali on može biti
+    prazan (ne mora vratiti konkretnu vrijednost); kao argumente fja (odvojene zarezima) dozvoljavamo 
+    samo brojeve, cvjetne formule, sekvence gena, latinske nazive, FLOWER_VAR, NUM_VAR
+    5) funkcijski poziv (od definicije se razlikuje po tome sto nakon oble zagrade ne dode vitica);
+    moze se pojaviti samostalno ili kao desna strana pridruživanja varijabli
+    6) operator ~ (alias info) koristi se za dobivanje raznih informacija o cvijetu određenih
+    njegovom cvjetnom formulom t.d. se stavi npr. info €cvijet; umjesto cvjetne varijable može doći
+    i sekvenca gena ili latinski naziv ili cvjetna formula
+    7) print u datoteku pomocu kljucne rijeci 'datw'; npr. datw("ime.txt", nesto) gdje nesto moze biti
+    cvjetna varijabla, numericka varijabla, broj, cvjetna formula, sekvenca gena ili latinski naziv
+    8) citanje iz datoteke pomocu kljucne rijeci 'datread'; npr $x = datread("ime.txt")
     9) konacni tip podataka (flower formula
         nalazit ce se u uglatim zagradama i sastojat ce se od velikih i malih slova i brojeva;
-        u stvarnosti su komplicirane al mi mozemo koristit jednostavniju verziju;
-        kratki opis: https://www.vedantu.com/neet/floral-formula-of-fabaceae)
-    7) potencijalno beskonacni tip podatka (sekvence dna - zapocinje s %)
+        (https://en.wikipedia.org/wiki/Floral_formula)
+    7) potencijalno beskonacni tip podatka (sekvence dna - zapocinje s % i smije sadržavati samo
+    slova A, C, T, G)
     8) operator ? (alias ed) koristi se za racunanje genetske udaljenosti(evolutionary distance);
         to je višemjesni operator sto znaci da se moze pozvati na proizvoljno mnogo biljaka;
         tim biljkama ce se genomi usporedivati do duljine biljke s najkracim genomom i
-        vratit ce se one dvije biljke s najmanjom razlikom; kao i info moze se pozvati na varijablama
-        ili latinskim nazivima
+        vratit ce se one dvije biljke s najmanjom razlikom; kao i info moze se pozvati na 
+        latinskom nazivu, sekvencama gena, cvjetnoj formuli ili cvjetnoj varijabli
     9) operator ß (alias cmp) koristi se za pronalazak genetski najblizeg cvijeta;
-        ubiginosa
+        npr "Rosa Rubiginosa ß Rosa rugosa ß Olea europaea" ce odlučiti je li Rosa Rugosa
+        ili Olea europaea genetski bliža cvijetu Rosa Rubiginosa
     10) sql naredba za unos cvijeta u tablicu pomocu operator '->'
         (npr. ->Rosa rubiginosa->[K5C5AG10]->ATGCTGACGTACGTTA unosi u tablicu redak
         gdje je ime Rosa rubiginosa, cvjetna formula je K5C5AG10)
@@ -33,19 +40,15 @@ Sto omogucavamo i kako:
             -alias: dohvati
             primjer: dohvati Rosa rubiginosa
         
-
-    napomena: varijable u koje se pohranjuju brojevi su ozn s $, a ostale s €
     napomena: pojedine naredbe u jeziku moraju biti odvojene s \n
-    napomena: kao argumente fja (odvojene zarezima) dozvoljavamo samo brojeve, cvjetne formule, sekvence gena,
-    latinske nazive, FLOWER_VAR, NUM_VAR (dakle ne dozvoljavamo da argument bude npr. $k + $l -
-    on je to dozvolio u primjeru 09 ili obicno slovo (to s obicnim slovom treba popraviti))
-    napomena: treba napomenuti da korisnik ne moze definirati funkciju s imenom 'program' jer je to rezervirano za main
-    napomena: nece se javiti greska ako korisnik definira fju i nakon ret unese jos naredbi prije }, ali se te naredbe jednostavno nece izvrsiti
+    napomena: korisnik ne moze definirati funkciju s imenom 'program' jer je to rezervirano za main
 '''
 import os
 from vepar import *
+#za bazu podataka koristimo veprov backend
 from backend import PristupLog
 
+#pomocna funkcija za kontrolu formata cvjetne formule u lekseru
 def ffControl(lex):
     if not lex > '>':
         if lex >= '1':
@@ -63,15 +66,15 @@ def ffControl(lex):
 class T(TipoviTokena):
     RET = 'ret' #povratna vrijednost funkcije
     DATW, DATREAD = 'datw', 'datread' #pisi u datoteku/citaj datoteku
-    EOL = ";" #kraj unosa (bitno za terminal)
-    INFO = '~' 
+    EOL = ";" #kraj unosa (bitno za terminal - izvršava dosadašnje naredbe)
+    INFO = '~' #informacije o cvijetu
     NR = "\n" #separator naredbi
-    CMP, JEDN, ED, GEN = 'ß=?%'
-    PLUS, MINUS, PUTA, KROZ, ZAREZ = '+-*/,'
-    OO, OZ, VO, VZ, UO, UZ = '(){}[]' #OO = obla otvorena
-    SQLINSERT = '->'
-    SQLFETCH = '<-'
-    class LAT_NAZ(Token): #latinski naziv sukulenta, prva rijec pocinje velikim slovom, druga malim
+    CMP, JEDN, ED, GEN = 'ß=?%' #znak jednakosti i posebni operatori za cvjetni tip
+    PLUS, MINUS, PUTA, KROZ, ZAREZ = '+-*/,' #klasicni aritmeticki operatori za numericki tip
+    OO, OZ, VO, VZ, UO, UZ = '(){}[]' #npr. OO = obla otvorena
+    SQLINSERT = '->' #unos u bazu podataka
+    SQLFETCH = '<-' #dohvacanje iz baze podataka
+    class LAT_NAZ(Token): #latinski naziv cvijeta, prva rijec pocinje velikim slovom, druga malim
         def vrijednost(self, mem, unutar): return self.sadržaj
     class BROJ(Token):
         def vrijednost(self, mem, unutar): return int(self.sadržaj)
@@ -79,15 +82,13 @@ class T(TipoviTokena):
         def vrijednost(self, mem, unutar): return mem[self]
     class NUMVAR(Token): #numerička varijabla
         def vrijednost(self, mem, unutar): return mem[self]
-    class FLOWERVAR(Token): #cvjetna varijabla (cvjetna formula, sekvenca dna ili latinski naziv)
+    class FLOWERVAR(Token): #cvjetna varijabla (vrijednost je cvjetna formula, sekvenca dna ili latinski naziv)
         def vrijednost(self, mem, unutar): return mem[self]
     class FLOWERF(Token): #cvjetna formula
         def vrijednost(self, mem, unutar): return self.sadržaj
     class GENSEKV(Token): #sekvenca gena
         def vrijednost(self, mem, unutar): return self.sadržaj
     class DAT(Token): #ime datoteke
-        def vrijednost(self, mem, unutar): return self.sadržaj
-    class SQLSTR(Token): #za osposobljavanje sql-a
         def vrijednost(self, mem, unutar): return self.sadržaj
 
 @lexer
@@ -100,31 +101,25 @@ def bilj(lex):
         elif znak.isdecimal():
             lex.prirodni_broj(znak)
             yield lex.token(T.BROJ)
-        elif znak.isupper():
+        elif znak.isupper(): #latinski naziv
             lex * str.isalpha
-            if lex >= " ":  #latinski naziv
+            if lex >= " ":
                 znak = next(lex)
                 if znak.isupper():
                     raise lex.greška('očekivano malo slovo')
                 else:
                     lex * str.isalpha
                 yield lex.literal_ili(T.LAT_NAZ)
-            else:   #sekvenca gena
-                yield lex.token(T.GENSEKV)
         elif znak == '€':   #cvjetna varijabla
             lex * str.isalnum
             yield lex.literal_ili(T.FLOWERVAR)
         elif znak == '$':   #numerička varijabla
             lex * str.isalnum
             yield lex.literal_ili(T.NUMVAR)
-        elif znak == '#': #komentar po uzoru na primjer 09
-            lex - "\n"      #for some reason vraca error da nije naso "\n" -> to se
-                            #dogodi samo za unos kroz terminal, ako mu se da ulaz ovak kak sam stavila radi normalno -Ivana
-                            #mislim da je problem u tome sto prilikom ucitavanja stringa iz terminala python u liniji ulaz = str(input()) nigdje ne pohranjuje znak "\n"
-                            #pa bi ovo trebali drugacije citati, kao do kraja retka ili staviti ulaz = str(input())+"\n"
-                            #stavila sam ovu drugu opciju i cini mi se da radi kak treba ~Dora
+        elif znak == '#': #jednolinijski komentar
+            lex - "\n"
             lex.zanemari()
-        elif znak == '[':
+        elif znak == '[': #cvjetna formula (za detalje: https://en.wikipedia.org/wiki/Floral_formula)
             flag = 0
             if poc1 := lex >= 'B': #bracts (optional)
                 if not lex > 't':
@@ -180,23 +175,25 @@ def bilj(lex):
                 else:
                     lex >> ']'
                     yield lex.token(T.FLOWERF)
-            else:
+            else: #lijepi ispis uputa/greške
                 string = "First formulation option:\n\tBracts(optional): 'B'\n\tBracteoles(optional): 'Bt'\n\tTepals: 'P' or 'CaCo'\n\tStamens: 'A'\n\tCarpels: 'G'\n\tOvules(optional): 'V' or 'O'\n"
                 string += "Second formulation option:\n\tBracts(optional): 'B'\n\tBracteoles(optional): 'Bt'\n\tSepals and petals: 'K' or 'Ca' and then 'C' or 'Co'\n\tStamens: 'A'\n\tCarpels: 'G'\n\tOvules(optional): 'V' or 'O'\n"
                 string += "Note that each label must be followed by a number between 1 and 12 or by the symbol '>' which means 'more than 12'"
                 raise LeksičkaGreška("Neispravno formulirana cvjetna formula. Proučite sljedeće upute za ispravnu formulaciju:\n"+string)
-        elif znak == '-':
+        elif znak == '-': #sqlinsert
             if lex >= '>':
                 yield lex.token(T.SQLINSERT)
             else:
                 yield lex.token(T.MINUS)
-        elif znak == '<':
+        elif znak == '<': #sqlfetch
             lex >= '-'
             yield lex.token(T.SQLFETCH)
-        elif znak == '"':
+        elif znak == '"': #ime datoteke
             lex - '"'
             yield lex.token(T.DAT)
-        elif znak == '%': #gen se smije sastojati samo od A, C, G, T
+        elif znak == '=': #znak jednakosti
+            yield lex.token(T.JEDN)
+        elif znak == '%': #sekvence gena
             while not (lex > ' ' or lex > "\n"):
                 if lex > 'A':
                     lex >> 'A'
@@ -209,7 +206,7 @@ def bilj(lex):
                 else:
                     raise LeksičkaGreška("U genu se nalazi nepostojeća nukleobaza. Postojeće nukleobaze su A, C, T i G.")
             yield lex.token(T.GENSEKV)
-        else:
+        else: #preostalo ili alias ili ime funkcije ili literal
             lex * str.isalpha
             if lex.sadržaj == "info":
                 yield lex.token(T.INFO)
@@ -222,16 +219,12 @@ def bilj(lex):
             elif lex.sadržaj == "dohvati":
                 yield lex.token(T.SQLFETCH)
             else:
-                yield lex.literal_ili(T.IME) #ako nije nis drugo, onda je literal
-
-"""bilj('''
-€formula = [Bt1K5C5A1G>]
-''')"""
-
-###BKG
-# program -> funkcija | funkcija program                          #ne znam je li gramatika u skladu s parserom
+                yield lex.literal_ili(T.IME)
+################################################################################################treba provjeriti uskladenost BKG i parsera
+### BKG
+# program -> funkcija | funkcija program
 # funkcija -> IME OO parametri? OZ VO naredba VZ
-# parametri -> ime | parametri ZAREZ ime | nesto_cvjetno | parametri ZAREZ nesto_cvjetno        #nije omoguceno da druga funkcija bude parametar funkcije
+# parametri -> ime | parametri ZAREZ ime | nesto_cvjetno | parametri ZAREZ nesto_cvjetno
 # ime -> NUMVAR | FLOWERVAR
 # naredba -> pridruži | VO naredbe VZ | RET argument
 #         | gen_dist | closest | petlja
@@ -256,7 +249,7 @@ def bilj(lex):
 #   (svaki od njih jedinstveno odreduje biljku)
 
 
-### Parsing time :,) -> dosta toga po uzoru na primjer 09
+### Parser
 class P(Parser):
     def program(p) -> 'Memorija':
         p.funkcije = Memorija(redefinicija=False)
@@ -306,15 +299,13 @@ class P(Parser):
             p >> T.OO
             dat = p >> T.DAT
             p >> T.ZAREZ
-            unos = p.ime()
+            unos = p >> {T.BROJ, T.GENSEKV, T.LAT_NAZ, T.FLOWERF, T.FLOWERVAR, T.NUMVAR}
             p >> T.OZ
             return UpisiUDat(dat, unos)
         elif p > T.NUMVAR:
             p >= T.NR 
-            print("naletila na numvar i pridr")
             ime = p.ime()
             if p > T.JEDN:
-                print("jednako")
                 p >> T.JEDN
                 if p > T.DATREAD:
                     p >> T.DATREAD
@@ -328,16 +319,16 @@ class P(Parser):
                 return p.petlja(ime)
         elif p > T.VO: 
             return p.blok()
-        elif p >= T.RET: 
+        elif p >= T.RET: #fja moze vracati varijablu, broj ili nesto_cvjetno, ali u svakom slucaju *mora* imati ret
             if a := p >= T.NUMVAR:
                 return Vrati(a)
             elif b := p >= T.FLOWERVAR:
                 return Vrati(b)
             elif c := p >= {T.FLOWERF, T.GENSEKV, T.LAT_NAZ}:
-                return Vrati(c) #fja moze vracati varijablu, broj ili nesto_cvjetno, ali u svakom slucaju *mora* nesto vratiti
+                return Vrati(c)
             elif d := p >= T.BROJ:
                 return Vrati(d)
-            else: #void funkcija
+            else:
                 return Vrati(nenavedeno)
         elif p >= T.SQLINSERT:
             prvi = p >> T.LAT_NAZ
@@ -347,7 +338,7 @@ class P(Parser):
             treci = p >> T.GENSEKV
             return Insert(prvi, drugi, treci)
         elif p >= T.SQLFETCH:
-            podatak = p >> { T.LAT_NAZ, T.FLOWERF, T.GENSEKV} #mora biti nesto cvjetno
+            podatak = p >> { T.LAT_NAZ, T.FLOWERF, T.GENSEKV}
             return Fetch(podatak)
         elif p > T.FLOWERVAR:
             ime = p.ime()
@@ -457,7 +448,7 @@ class P(Parser):
             if call in p.funkcije:
                 funkcija = p.funkcije[call]
                 return Poziv(funkcija, p.argumenti(funkcija.parametri))
-            elif ime == p.imef:
+            elif call == p.imef:
                 return Poziv(nenavedeno, p.argumenti(p.parametrif))
         elif p >= T.OO:
             u_zagradi = p.aritm()
@@ -475,7 +466,6 @@ class P(Parser):
 
 def izvrši(funkcije, *argv):
     funkcije['program'].pozovi(argv)
-    print('Program je uspješno završio')
 
 ### AST
 # Funkcija: ime: IME parametri:[NUMVAR|FLOWERVAR|nesto_cvjetno] tijelo:naredba
@@ -936,7 +926,13 @@ Create("Botanika", stupci).razriješi()
             print('\t', thing) """
 
 #isprobavanje parsera:
-
+"""proba = P('''#komentar
+program(){
+datw("dat.txt",1)
+}
+''')
+"""
+"""
 bilj('''#komentar
 zb($a){
     datw("dat.txt",$a)
@@ -958,7 +954,7 @@ program(){
 $a = 502
 $b=zb($a)
 }
-''')
+''')"""
 """proba = P('''#komentar
 zb($a,$b){
     datw("dat.txt",$a)
@@ -975,26 +971,13 @@ datw("dat1.txt", $rezz)
 }
 ''')"""
 
-"""proba = P('''#komentar
-program(){
-$a=1
-$b=2
-ret 0
-}
-zb($a,$b){
-    datw("dat.txt",$a)
-    datw("dat2.txt",$b)
-    $c = $a + $b
-    ret $c
-}
-''')"""#ovaj primjer radi!!!
-"""
+
 proba = P('''#komentar
 program(){
 ->Rosa rubiginosa->[Bt1K5C5A1G>]->%ATGCTGACGTACGTTA
 €cvijet = Rosa rubiginosa
 datw("dat.txt",€cvijet)
-$num1 = pet €cvijet
+$num1 = info €cvijet
 €cvijet ? Rosa rubiginosa ? Rosa rugosa
 $num2 = ~ €cvijet
 $num3 = 1
@@ -1004,17 +987,18 @@ datw("dat.txt",$num3)
 €formula = [Bt1K5C5A1G>]
 ret 0
 }
-''') """#ovaj primjer radi!!!
-prikaz(proba, 5)
-izvrši(proba) #naredba izvrši je ta koja radi pokrece
+''')
 
+prikaz(proba, 5)
+izvrši(proba) #naredba izvrši je ta koja pokrece
+"""
 for tablica, log in rt.imena:
     print('Tablica', tablica, '- stupci:')
     for stupac, pristup in log:
         print('\t', stupac, pristup)
         for thing in pristup.objekt.rows: ##prolazak po rows
             print('\t', thing)
-
+"""
 ###treba otkomentirati za unos kroz terminal
 """
 ukupni = "program(){\n"
@@ -1060,4 +1044,4 @@ while 1:
         if ';' not in ulaz:
             main +=ulaz
     trenutni = ""               
-            """
+        """    
