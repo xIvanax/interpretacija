@@ -10,7 +10,7 @@
 * for petlja moze imati i NUMVAR i BROJ prije { - omoguceno _~Ivana_
 * trenutno pri citanju iz sql tablice ne pazimo na mogucnost jel fali neki podatak ( ja mislim) - zelimo li pazit na to? _~Ivana_
 * ne radi pridruzivanje funkcije tipa $x =f($y) - iz nekog razloga proguta =f kao ime funkcije umjesto da zasebno proguta = i f - treba popraviti ili cemo kao dodatan uvjet u jeziku definirati "prozračnost" koda (moraju dolaziti razmaci izmedu svega)
-* funkcija se ne može pozvati bez da se pridruži varijabli - treba popraviti
+* funkcija se ne može pozvati bez da se pridruži varijabli - popravljeno _~Ivana_
 # zadatak
 * Jezik mora podržavati sljedeće:
   * interaktivni način rada (korisnik utipkava naredbu po naredbu),
