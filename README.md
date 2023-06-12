@@ -8,6 +8,7 @@
   * ~~poziv funkcije funkcionira samo ako se pridruzi nekoj varijabli i svaka funkcija mora nesto vratiti (osim main-a koji uvijek vrati 0)~~
 * __nisam testirala jos sto se tocno "smije" u smislu hoce li se program zaliti ako cvjetnoj varijabli probam pridruziti broj i slicno - mislim da bi bilo dobro da svi testiramo sve sta nam padne na pamet i da onda ovdje u section "Žalbe" napisemo sto smo testirali i sto valja/ne valja__
 # Žalbe
+* funkcije ne mogu primiti poziv druge funkcije ili aritmeticki izraz kao argument (u primjeru 09 su mogle primiti aritmeticki izraz)
 * for petlja moze imati i NUMVAR i BROJ prije { - omoguceno _~Ivana_
 * trenutno pri citanju iz sql tablice ne pazimo na mogucnost jel fali neki podatak ( ja mislim) - zelimo li pazit na to? _~Ivana_
 * ne radi pridruzivanje funkcije tipa $x =f($y) - iz nekog razloga proguta =f kao ime funkcije umjesto da zasebno proguta = i f - treba popraviti ili cemo kao dodatan uvjet u jeziku definirati "prozračnost" koda (moraju dolaziti razmaci izmedu svega) - resolved, bila je grška u lekseru _~Ivana_
