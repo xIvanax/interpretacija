@@ -7,13 +7,13 @@ Sto omogucavamo i kako:
     3) for petlja (npr. $var{$k = $k + 1} -> znaci da se €var puta izvrši naredba $k = $k+1);
     umjesto NUMVAR mozemo imati i obican broj
     4) definicije funkcija (npr. plus($a, $b){ret $a+$b}); fja uvijek mora završiti s ret, ali on može biti
-    prazan (ne mora vratiti konkretnu vrijednost); kao argumente fja (odvojene zarezima) dozvoljavamo 
+    prazan (ne mora vratiti konkretnu vrijednost); kao argumente fja (odvojene zarezima) dozvoljavamo
     samo brojeve, cvjetne formule, sekvence gena, latinske nazive, FLOWER_VAR, NUM_VAR
     5) funkcijski poziv (od definicije se razlikuje po tome sto nakon oble zagrade ne dode vitica);
     moze se pojaviti samostalno ili kao desna strana pridruživanja varijabli
     6) operator ~ (alias info) koristi se za dobivanje raznih informacija o cvijetu određenih
     njegovom cvjetnom formulom t.d. se stavi npr. info €cvijet; umjesto cvjetne varijable može doći
-    i sekvenca gena ili latinski naziv ili cvjetna formula
+    i sekvenca gena ili latinski naziv ili cvjetna formula, vraca broj latica
     7) print u datoteku pomocu kljucne rijeci 'datw'; npr. datw("ime.txt", nesto) gdje nesto moze biti
     cvjetna varijabla, numericka varijabla, broj, cvjetna formula, sekvenca gena ili latinski naziv
     8) citanje iz datoteke pomocu kljucne rijeci 'datread'; npr $x = datread("ime.txt")
@@ -25,7 +25,7 @@ Sto omogucavamo i kako:
     8) operator ? (alias ed) koristi se za racunanje genetske udaljenosti(evolutionary distance);
         to je višemjesni operator sto znaci da se moze pozvati na proizvoljno mnogo biljaka;
         tim biljkama ce se genomi usporedivati do duljine biljke s najkracim genomom i
-        vratit ce se one dvije biljke s najmanjom razlikom; kao i info moze se pozvati na 
+        vratit ce se one dvije biljke s najmanjom razlikom; kao i info moze se pozvati na
         latinskom nazivu, sekvencama gena, cvjetnoj formuli ili cvjetnoj varijabli
     9) operator ß (alias cmp) koristi se za pronalazak genetski najblizeg cvijeta;
         npr "Rosa Rubiginosa ß Rosa rugosa ß Olea europaea" ce odlučiti je li Rosa Rugosa
@@ -39,7 +39,7 @@ Sto omogucavamo i kako:
         npr. unos: <-Rosa rubiginosa, ispis: Rosa rubiginosa \n [K5C5AG10] \n ATGCTGACGTACGTTA
             -alias: dohvati
             primjer: dohvati Rosa rubiginosa
-        
+
     napomena: pojedine naredbe u jeziku moraju biti odvojene s \n
     napomena: korisnik ne moze definirati funkciju s imenom 'program' jer je to rezervirano za main
 '''
@@ -303,7 +303,7 @@ class P(Parser):
             p >> T.OZ
             return UpisiUDat(dat, unos)
         elif p > T.NUMVAR:
-            p >= T.NR 
+            p >= T.NR
             ime = p.ime()
             if p > T.JEDN:
                 p >> T.JEDN
@@ -312,12 +312,12 @@ class P(Parser):
                     p >> T.OO
                     dat = p >> T.DAT
                     p >> T.OZ
-                    return PridruziIzDat(ime, dat) 
+                    return PridruziIzDat(ime, dat)
                 else:
                     return Pridruživanje(ime, p.tipa(ime))
             else:
                 return p.petlja(ime)
-        elif p > T.VO: 
+        elif p > T.VO:
             return p.blok()
         elif p >= T.RET: #fja moze vracati varijablu, broj ili nesto_cvjetno, ali u svakom slucaju *mora* imati ret
             if a := p >= T.NUMVAR:
@@ -355,7 +355,7 @@ class P(Parser):
             elif p > T.ED:
                 return p.gen_dist(ime)
             elif p > T.CMP:
-                return p.closest(ime)  
+                return p.closest(ime)
         elif p > T.BROJ:
             return p.petlja(p >> T.BROJ)
         elif p > {T.FLOWERF, T.GENSEKV, T.LAT_NAZ}:
@@ -400,8 +400,12 @@ class P(Parser):
     def petlja(p, kolikoPuta) -> 'Petlja': #stavljamo li da je u petlji moguca samo jedna naredba? - valjda je Dorotea ovo pitala, trebalo bi bit moguce proizvoljno mnogo naredbi -Ivana
         p >> T.VO
         p >= T.NR
-        izvrsiti = p.naredba()
+        izvrsiti=[]
+        izvrsiti.append(p.naredba())
         p >= T.NR
+        while(not(p>T.VZ)):
+            izvrsiti.append(p.naredba())
+            p >= T.NR
         p >> T.VZ
         return Petlja(kolikoPuta, izvrsiti)
 
@@ -415,12 +419,12 @@ class P(Parser):
         p >> T.VZ
         p >= T.NR
         return Blok.ili_samo(n)
-        
+
     def argumenti(p, parametri) -> 'tipa*':
         arg = []
         p >> T.OO
         for i, parametar in enumerate(parametri):
-            if i: 
+            if i:
                 p >> T.ZAREZ
             arg.append(p.tipa(parametar))
         p >> T.OZ
@@ -429,11 +433,11 @@ class P(Parser):
     def aritm(p) -> 'Zbroj|član':
         članovi = [p.član()]
         while ...:
-            if pp := p >= T.PLUS: 
+            if pp := p >= T.PLUS:
                 članovi.append(p.član())
-            elif pp := p >= T.MINUS: 
+            elif pp := p >= T.MINUS:
                 članovi.append(Suprotan(p.član()))
-            else: 
+            else:
                 return Zbroj.ili_samo(članovi)
 
     def član(p) -> 'Umnožak|faktor':
@@ -442,7 +446,7 @@ class P(Parser):
         return Umnožak.ili_samo(faktori)
 
     def faktor(p) -> 'Suprotan|Poziv|aritm|BROJ|Info':
-        if p >= T.MINUS: 
+        if p >= T.MINUS:
             return Suprotan(p.faktor())
         elif call := p >= T.IME:
             if call in p.funkcije:
@@ -461,7 +465,7 @@ class P(Parser):
                 return Info(calc)
             else:
                 return Info(p.nesto_cvjetno())
-        else: 
+        else:
             return p >> T.BROJ
 
 def izvrši(funkcije, *argv):
@@ -528,9 +532,9 @@ class Create(AST):
         pristup = rt.imena[naredba.tablica] = Memorija(redefinicija=False)
         for stupac in naredba.specifikacije:
             pristup[stupac.ime] = PristupLog(stupac)
-        
+
 #funkcija koja kao parametre prima ime stupca kojeg pretrazujemo, te podatak koji trazimo
-#vraca redni broj mjesta na kojemu se podatak nalazi u tom stupcu    
+#vraca redni broj mjesta na kojemu se podatak nalazi u tom stupcu
 def pronadiBroj(imeStupca, podatak):
     broj=-1
     for tablica,log in rt.imena:
@@ -541,7 +545,7 @@ def pronadiBroj(imeStupca, podatak):
                     if thing==podatak:
                         broj=i
                         break
-                    i+=1 
+                    i+=1
     return broj
 
 def vratiPodatak(imeStupca,broj):
@@ -554,7 +558,7 @@ def vratiPodatak(imeStupca,broj):
                     if(brojac==broj):
                         vrati=thing
                         break
-                    brojac+=1 
+                    brojac+=1
     return vrati
 
 class Insert(AST): #unos podataka u
@@ -568,7 +572,7 @@ class Insert(AST): #unos podataka u
         if(provjera==-1): #podatak se ne nalazi u tablici, stoga ga sada unosimo
             for tablica,log in rt.imena:
                 for stupac,pristup in log:
-                    if stupac=="LN": 
+                    if stupac=="LN":
                         pristup.objekt.rows.append(self.prvi.vrijednost(mem,unutar))
                     elif stupac=="FF":
                         pristup.objekt.rows.append(self.drugi.vrijednost(mem,unutar))
@@ -590,7 +594,7 @@ class Fetch(AST):
                 raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
             ff=vratiPodatak("FF",broj)
             gs=vratiPodatak("GS",broj)
-                          
+
         elif "[" in self.flower.vrijednost(mem,unutar): #imamo cvijetnu fomulu
             ff=self.flower.vrijednost(mem,unutar)
             broj=-1
@@ -599,7 +603,7 @@ class Fetch(AST):
                 raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
             ln=vratiPodatak("LN",broj)
             gs=vratiPodatak("GS",broj)
-                                    
+
         else: #imamo genetski kod
             broj=-1
             gs=self.flower.vrijednost(mem,unutar)
@@ -609,7 +613,7 @@ class Fetch(AST):
                 raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
             ln=vratiPodatak("LN",broj)
             ff=vratiPodatak("FF",broj)
-        
+
         print(ln+" "+ff+" "+gs)
         return #opet valjda nis ne returnam, samo printam
 
@@ -625,8 +629,8 @@ class Closest(AST):
                 if broj==-1:
                     raise GreškaIzvođenja('Ne postoji objekt ' + cvijet.vrijednost(mem,unutar) + ' u tablici')
                 genKodovi.append(vratiPodatak("GS",broj))
-                
-            elif "[" in cvijet.vrijednost(mem,unutar): #imamo cvijetnu fomulu 
+
+            elif "[" in cvijet.vrijednost(mem,unutar): #imamo cvijetnu fomulu
                 broj=-1
                 broj=pronadiBroj("FF",cvijet.vrijednost(mem,unutar))
                 if broj==-1:
@@ -663,17 +667,17 @@ class Distance(AST):
                 if broj==-1:
                     raise GreškaIzvođenja('Ne postoji objekt ' + cvijet.vrijednost(mem,unutar) + ' u tablici')
                 genKodovi.append(vratiPodatak("GS",broj))
-                
+
             elif "[" in cvijet.vrijednost(mem,unutar): #imamo cvijetnu fomulu
                 broj=-1
                 broj=pronadiBroj("FF", cvijet.vrijednost(mem,unutar))
                 if broj==-1:
                     raise GreškaIzvođenja('Ne postoji objekt ' + cvijet.vrijednost(mem,unutar) + ' u tablici')
                 genKodovi.append(vratiPodatak("GS",broj))
-    
+
             else: #imamo genetski kod
                 genKodovi.append(cvijet.vrijednost(mem,unutar))
-            
+
         l=len(min(genKodovi,key=len)) #duljina najkraceg genetskog koda
         maks=0 #max broj gena koji se podudaraju
         cvijet1=""
@@ -694,6 +698,7 @@ class Distance(AST):
 class Info(AST):
     flower: 'nesto_cvjetno'
     def vrijednost(self, mem, unutar):
+        brlat = 0
         ff=""
         if " " in self.flower.vrijednost(mem,unutar): #imamo latinski naziv
             #trazimo koje po redu u stupcu je self.flower.vrijednost(mem,unutar) kako bi mogli uzeti genetski kod iz istog reda
@@ -702,7 +707,7 @@ class Info(AST):
             if broj==-1:
                 raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
             ff=vratiPodatak("FF",broj)
-            
+
         else: #imamo genetski kod
             broj=-1
             broj=pronadiBroj("GS", self.flower.vrijednost(mem,unutar))
@@ -711,7 +716,7 @@ class Info(AST):
             ff=vratiPodatak("FF",broj)
 
         formula=ff[1:-1]
-        
+
         #provjera od kojih se dijelova sastoji biljka
         p=ff.find("t")
         if(p == -1):
@@ -719,44 +724,44 @@ class Info(AST):
         else:
             if not ff[p+2].isdigit():
                 if ff[p+1] == ">": print("Biljka sadrži 12 ili više bracteola.")
-                else: print("Biljka sadrži ", ff[p+1], " bracteola.")    
+                else: print("Biljka sadrži ", ff[p+1], " bracteola.")
             else:
                 if not ff[p+1].isdigit(): print("Biljka sadrži jedan bracteol.")
                 else: print("Biljka sadrži ", ff[p+1]+ff[p+2], " bracteola.")
-        
+
         p=ff.find("B")
         if(p == -1):
             print("Biljka ne sadrži zalistke.")
         else:
             if not ff[p+2].isdigit():
                 if ff[p+1] == ">": print("Biljka sadrži 12 ili više zalistaka.")
-                else: print("Biljka sadrži ", ff[p+1], " zalistaka.")    
+                else: print("Biljka sadrži ", ff[p+1], " zalistaka.")
             else:
                 if not ff[p+1].isdigit(): print("Biljka sadrži jedan zalistak.")
                 else: print("Biljka sadrži ", ff[p+1]+ff[p+2], " zalistaka.")
-        
+
         p=ff.find("A")
         if(p == -1):
             print("Biljka ne sadrži prašnike.")
         else:
             if not ff[p+2].isdigit():
                 if ff[p+1] == ">": print("Biljka sadrži 12 ili više prašnika.")
-                else: print("Biljka sadrži ", ff[p+1], " prašnika.")    
+                else: print("Biljka sadrži ", ff[p+1], " prašnika.")
             else:
                 if not ff[p+1].isdigit(): print("Biljka sadrži jedan prašnik.")
                 else: print("Biljka sadrži ", ff[p+1]+ff[p+2], " prašnika.")
-        
+
         p=ff.find("G")
         if(p == -1):
             print("Biljka ne sadrži pestić.") #sta god da to je
         else:
             if not ff[p+2].isdigit():
                 if ff[p+1] == ">": print("Biljka sadrži 12 ili više pestića.")
-                else: print("Biljka sadrži ", ff[p+1], " pestića.")    
+                else: print("Biljka sadrži ", ff[p+1], " pestića.")
             else:
                 if not ff[p+1].isdigit(): print("Biljka sadrži jedan pestića.")
                 else: print("Biljka sadrži ", ff[p+1]+ff[p+2], " pestića.")
-        
+
         p=ff.find("V")
         if(p == -1):
             t=ff.find("O")
@@ -765,18 +770,18 @@ class Info(AST):
             else:
                 if not ff[t+2].isdigit():
                     if ff[t+1] == ">": print("Biljka sadrži 12 ili više cvijetnih plodnica.")
-                    else: print("Biljka sadrži ", ff[t+1], " cvijetnih plodnica.")    
+                    else: print("Biljka sadrži ", ff[t+1], " cvijetnih plodnica.")
                 else:
                     if not ff[t+1].isdigit(): print("Biljka sadrži jednu cvjetnu plodnicu.")
                     else: print("Biljka sadrži ", ff[t+1]+ff[t+2], " cvjetnih plodnica.")
         else:
             if not ff[p+2].isdigit():
                 if ff[p+1] == ">": print("Biljka sadrži 12 ili više cvijetnih plodnica.")
-                else: print("Biljka sadrži ", ff[p+1], " cvijetnih plodnica.")    
+                else: print("Biljka sadrži ", ff[p+1], " cvijetnih plodnica.")
             else:
                 if not ff[p+1].isdigit(): print("Biljka sadrži jednu cvjetnu plodnicu.")
                 else: print("Biljka sadrži ", ff[p+1]+ff[p+2], " cvjetnih plodnica.")
-                
+
         p=ff.find("P")
         if(p == -1):
             t=ff.find("K")
@@ -785,30 +790,39 @@ class Info(AST):
             else:
                 if not ff[t+2].isdigit():
                     if ff[t+1] == ">": print("Biljka sadrži 12 ili više čaški.") #čaški ili čašci? nisam pismena -Dorotea
-                    else: print("Biljka sadrži ", ff[t+1], " čaški.")    
+                    else: print("Biljka sadrži ", ff[t+1], " čaški.")
                 else:
                     if not ff[t+1].isdigit(): print("Biljka sadrži jednu čašku.")
-                    else: print("Biljka sadrži ", ff[t+1]+ff[t+2], " čaški.") 
-                    
+                    else: print("Biljka sadrži ", ff[t+1]+ff[t+2], " čaški.")
+
             t=ff.find("C")
             if(t == -1):
                 print("Biljka ne sadrži latice.")
+                brlat = 0
             else:
                 if not ff[t+2].isdigit():
-                    if ff[t+1] == ">": print("Biljka sadrži 12 ili više latica.") 
-                    else: print("Biljka sadrži ", ff[t+1], " latica.")    
+                    if ff[t+1] == ">":
+                        print("Biljka sadrži 12 ili više latica.")
+                        brlat = 13
+                    else:
+                        print("Biljka sadrži ", ff[t+1], " latica.")
+                        brlat = ff[t+1]
                 else:
-                    if not ff[t+1].isdigit(): print("Biljka sadrži jednu laticu.")
-                    else: print("Biljka sadrži ", ff[t+1]+ff[t+2], " laticu.") 
+                    if not ff[t+1].isdigit():
+                        print("Biljka sadrži jednu laticu.")
+                        brlat = 1
+                    else:
+                        print("Biljka sadrži ", ff[t+1]+ff[t+2], " laticu.")
+                        brlat = ff[t+1]+ff[t+2]
         else:
             if not ff[p+2].isdigit():
                 if ff[p+1] == ">": print("Biljka sadrži 12 ili više vanjskih latica.")
-                else: print("Biljka sadrži ", ff[p+1], " vanjskih latica.")    
+                else: print("Biljka sadrži ", ff[p+1], " vanjskih latica.")
             else:
                 if not ff[p+1].isdigit(): print("Biljka sadrži jednu vanjsku laticu.")
                 else: print("Biljka sadrži ", ff[p+1]+ff[p+2], " vanjskih latica.")
-        
-        return
+
+        return int(brlat)
 
 class OneLine(AST):
     ime: 'linija'
@@ -824,7 +838,7 @@ class Funkcija(AST):
         lokalni = Memorija(zip(funkcija.parametri, argumenti))
         try: funkcija.tijelo.izvrši(mem=lokalni, unutar=funkcija)
         except Povratak as exc: return exc.preneseno
-        else: 
+        else:
             if str(funkcija.ime)[4:len(str(funkcija.ime))-1] != "program": #main ne mora nista vratiti
                 raise GreškaIzvođenja(f'{funkcija.ime} nije ništa vratila')
 
@@ -854,7 +868,7 @@ class Petlja(AST):
     izvrsiti: 'naredba'
     def izvrši(petlja, mem, unutar):
         for i in range(petlja.kolikoPuta.vrijednost(mem, unutar)):
-            petlja.izvrsiti.izvrši(mem, unutar)
+            for naredba in petlja.izvrsiti: naredba.izvrši(mem, unutar)
 
 class Blok(AST):
     naredbe: 'naredba*'
@@ -930,12 +944,52 @@ Create("Botanika", stupci).razriješi()
             print('\t', thing) """
 
 #isprobavanje parsera:
+
 proba = P('''#komentar
+potnapot($x){
+    $y = 1
+    $x{
+        $y = $x * $y
+    }
+    ret $y
+#vraca x^x
+}
+potnapotlat(){
+    €c = Rosa rubiginosa
+    $p = ~ €c
+    $p = potnapot($p)
+    ret $p
+#vraca x^x za x = broj latica cvijeta
+}
+fakt($x){
+    $y = 1
+    $z = 1
+    $x{
+        $z = $z * $y
+        $y = $y + 1
+    }
+    ret $z
+#vraca x!
+}
 program(){
-datw("dat.txt",79)
-$x = 50
-$x = datread("dat.txt")
-datw("dat1.txt", $x)
+    $a = 5
+    $a = potnapot($a)
+    datw("dat11.txt", $a)
+    #pise 5^5 od a u dat11.txt (5^5 = 3125)
+    €cc = Rosa rubiginosa
+    #pise Rosa rubiginosa u dat12.txt
+    $a = ~ €cc
+    potnapotlat()
+    datw("dat12.txt", $a)
+    #pise koliko latica ima cc (tj Rosa rubiginosa)
+    datw("dat13.txt", €cc)
+    €ccc = datread("dat13.txt")
+    datw("dat14.txt", €ccc)
+    #Cita i pise Rosa rubiginosa iz dat13.txt u dat14.txt
+    $a = 5
+    $a = fakt($a)
+    datw("dat15.txt", $a)
+    #pise faktorijel od 5 u dat15.txt (5! = 120)
 }
 ''')
 
@@ -1050,5 +1104,5 @@ while 1:
     if flag==1:
         if ';' not in ulaz:
             main +=ulaz
-    trenutni = ""               
-        """    
+    trenutni = ""
+        """
