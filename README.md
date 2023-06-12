@@ -12,6 +12,7 @@
 * ne radi pridruzivanje funkcije tipa $x =f($y) - iz nekog razloga proguta =f kao ime funkcije umjesto da zasebno proguta = i f - treba popraviti ili cemo kao dodatan uvjet u jeziku definirati "prozračnost" koda (moraju dolaziti razmaci izmedu svega)
 * funkcija se ne može pozvati bez da se pridruži varijabli - popravljeno _~Ivana_
 * omogucene void fje (umjesto ret nesto moze biti i samo ret) _~Ivana_
+* parametri funkcija zasad ne mogu biti npr. obicno slovo nego se mora definirati tip - treba popraviti?
 # zadatak
 * Jezik mora podržavati sljedeće:
   * interaktivni način rada (korisnik utipkava naredbu po naredbu),
