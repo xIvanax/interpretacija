@@ -15,6 +15,7 @@
 * funkcija se ne može pozvati bez da se pridruži varijabli - popravljeno _~Ivana_
 * omogucene void fje (umjesto ret nesto moze biti i samo ret) _~Ivana_
 * parametri funkcija zasad ne mogu biti npr. obicno slovo nego se mora definirati tip - treba popraviti?
+* treba provjeriti javlja li gresku ako cvjetnoj varijabli pridruzimo broj ili poziv fje koja vraca broj i slicno
 # zadatak
 * Jezik mora podržavati sljedeće:
   * interaktivni način rada (korisnik utipkava naredbu po naredbu),
