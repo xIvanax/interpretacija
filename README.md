@@ -8,6 +8,7 @@
   * ~~poziv funkcije funkcionira samo ako se pridruzi nekoj varijabli i svaka funkcija mora nesto vratiti (osim main-a koji uvijek vrati 0)~~
 * __nisam testirala jos sto se tocno "smije" u smislu hoce li se program zaliti ako cvjetnoj varijabli probam pridruziti broj i slicno - mislim da bi bilo dobro da svi testiramo sve sta nam padne na pamet i da onda ovdje u section "Žalbe" napisemo sto smo testirali i sto valja/ne valja__
 # Žalbe
+-funkcija nemre primiti flowervar
 * treba napraviti retsrikcije/provjere u ast-u Pridruživanje t.d. se numeričkoj varijabli ne može pridružiti nešto cvjetno i slično
 * treba osmisliti kak provjeriti koji je tip podatka vratila funkcija ili čitanje iz datoteke pa opet paziti je li prikladno priduruženo NUMVAR-u ili FLOWERVAR-u
 * funkcije ne mogu primiti poziv druge funkcije ili aritmeticki izraz kao argument (u primjeru 09 su mogle primiti aritmeticki izraz)
