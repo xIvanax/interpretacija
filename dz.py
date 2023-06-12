@@ -5,10 +5,17 @@ Sto omogucavamo i kako:
     2) varijable (npr. €var -> kao sto bi u php-u imali $var; definiranje varijable bi bilo
         ovako: €cvijet = Rosa rubiginosa)
     3) for petlja (npr. $var{$k = $k + 1} -> znaci da se €var puta izvrši naredba $k = $k+1) - umjesto NUMVAR mozemo imati i obican broj
+<<<<<<< HEAD
     4) definicije funkcija (npr. plus(a, b){ret a+b})
     5) funkcijski poziv (od definicije se razlikuje po tome sto nakon oble zagrade ne dode vitica)
     6) operator ~ (alias info) koristi se za dobivanje površine cvijeta t.d. se stavi info €cvijet Ili
         info Rosa rubiginosa
+=======
+    4) definicije funkcija (npr. plus(a, b){ret a+b}) -> FUNKCIJA UVIJEK MORA ZAVRSITI S RET
+    5) funkcijski poziv (od definicije se razlikuje po tome sto nakon oble zagrade ne dode vitica) -> mora se pridružiti nekoj varijabli (zasad)
+    6) operator ~ (alias pet) koristi se za dobivanje broja latica cvijeta t.d. se stavi pet €cvijet Ili
+        pet Rosa rubiginosa
+>>>>>>> 50de33c (popravljeni neki buggovi i omogucene void fje i pozivi fja bez pridruzivanja varijabli)
     7) print u datoteku pomocu kljucne rijeci 'datw'
     8) citanje iz datoteke pomocu kljucne rijeci 'datread'
     9) konacni tip podataka (flower formula
@@ -38,7 +45,9 @@ Sto omogucavamo i kako:
     napomena: pojedine naredbe u jeziku moraju biti odvojene s \n
     napomena: kao argumente fja (odvojene zarezima) dozvoljavamo samo brojeve, cvjetne formule, sekvence gena,
     latinske nazive, FLOWER_VAR, NUM_VAR (dakle ne dozvoljavamo da argument bude npr. $k + $l -
-    on je to dozvolio u primjeru 09)
+    on je to dozvolio u primjeru 09 ili obicno slovo (to s obicnim slovom treba popraviti))
+    napomena: treba napomenuti da korisnik ne moze definirati funkciju s imenom 'program' jer je to rezervirano za main
+    napomena: nece se javiti greska ako korisnik definira fju i nakon ret unese jos naredbi prije }, ali se te naredbe jednostavno nece izvrsiti
 '''
 import os
 from vepar import *
@@ -333,8 +342,10 @@ class P(Parser):
                 return Vrati(b)
             elif c := p >= {T.FLOWERF, T.GENSEKV, T.LAT_NAZ}:
                 return Vrati(c) #fja moze vracati varijablu, broj ili nesto_cvjetno, ali u svakom slucaju *mora* nesto vratiti
-            else:
-                return Vrati(p >> T.BROJ)
+            elif d := p >= T.BROJ:
+                return Vrati(d)
+            else: #void funkcija
+                return Vrati(nenavedeno)
         elif p >= T.SQLINSERT:
             prvi = p >> T.LAT_NAZ
             p >> T.SQLINSERT
@@ -363,13 +374,20 @@ class P(Parser):
                 return p.closest(ime)  
         elif p > T.BROJ:
             return p.petlja(p >> T.BROJ)
-        else: #preostaje jedino CMP ili ED 
+        elif p > {T.FLOWERF, T.GENSEKV, T.LAT_NAZ}:
             cvjetni = p.nesto_cvjetno()
             if p > T.ED:
                 return p.gen_dist(cvjetni)
             else:
                 p >> T.CMP
                 return p.closest(cvjetni)
+        else: #preostaje poziv fje
+            call = p >> T.IME
+            if call in p.funkcije:
+                funkcija = p.funkcije[call]
+                return Poziv(funkcija, p.argumenti(funkcija.parametri))
+            elif ime == p.imef:
+                return Poziv(nenavedeno, p.argumenti(p.parametrif))
 
     def gen_dist(p, first):
         flowers = [first]
@@ -820,13 +838,19 @@ class Funkcija(AST):
         try: funkcija.tijelo.izvrši(mem=lokalni, unutar=funkcija)
         except Povratak as exc: return exc.preneseno
         else: 
-            if str(funkcija.ime)[4:len(str(funkcija.ime))-1] != "program":
+            if str(funkcija.ime)[4:len(str(funkcija.ime))-1] != "program": #main ne mora nista vratiti
                 raise GreškaIzvođenja(f'{funkcija.ime} nije ništa vratila')
 
 class Poziv(AST):
     funkcija: 'Funkcija?'
     argumenti: 'izraz*'
     def vrijednost(poziv, mem, unutar):
+        pozvana = poziv.funkcija
+        if pozvana is nenavedeno: pozvana = unutar  # rekurzivni poziv
+        argumenti = [a.vrijednost(mem, unutar) for a in poziv.argumenti]
+        return pozvana.pozovi(argumenti)
+
+    def izvrši(poziv, mem, unutar):
         pozvana = poziv.funkcija
         if pozvana is nenavedeno: pozvana = unutar  # rekurzivni poziv
         argumenti = [a.vrijednost(mem, unutar) for a in poziv.argumenti]
@@ -859,7 +883,10 @@ class Pridruživanje(AST):
 class Vrati(AST):
     što: 'izraz'
     def izvrši(self, mem, unutar):
-        raise Povratak(self.što.vrijednost(mem, unutar))
+        if self.što == nenavedeno: #u slucaju tzv. void funkcije
+            raise Povratak(nenavedeno)
+        else: #inace
+            raise Povratak(self.što.vrijednost(mem, unutar))
 
 class Zbroj(AST):
     pribrojnici: 'aritm*'
@@ -908,7 +935,7 @@ geni.append("ACGTTTTCGTATTCGTTA")
 geni.append("ACGTTTTCGTATTC")
 stupci.append(Stupac("GS", "GENSEKV", geni))
 Create("Botanika", stupci).razriješi()
-""" for tablica, log in rt.imena:
+""" for tablica, log in rt.imena: #ispis sql tablice
     print('Tablica', tablica, '- stupci:')
     for stupac, pristup in log:
         print('\t', stupac, pristup)
@@ -916,6 +943,29 @@ Create("Botanika", stupci).razriješi()
             print('\t', thing) """
 
 #isprobavanje parsera:
+
+bilj('''#komentar
+zb($a){
+    datw("dat.txt",$a)
+    datw("dat1.txt",$a)
+    ret $a
+}
+program(){
+$a = 502
+$b=zb($a)
+}
+''')
+proba = P('''#komentar
+zb($a){
+    datw("dat.txt",$a)
+    datw("dat1.txt",$a)
+    ret $a
+}
+program(){
+$a = 502
+$b=zb($a)
+}
+''')
 """proba = P('''#komentar
 zb($a,$b){
     datw("dat.txt",$a)
@@ -962,8 +1012,8 @@ datw("dat.txt",$num3)
 ret 0
 }
 ''') """#ovaj primjer radi!!!
-#prikaz(proba, 5)
-#izvrši(proba) #kad skuzimo kak unosit naredbe u terminal, naredba izvrši je ta koja (surprise) izvršava
+prikaz(proba, 5)
+izvrši(proba) #naredba izvrši je ta koja radi pokrece
 
 for tablica, log in rt.imena:
     print('Tablica', tablica, '- stupci:')
@@ -973,7 +1023,7 @@ for tablica, log in rt.imena:
             print('\t', thing)
 
 ###treba otkomentirati za unos kroz terminal
-
+"""
 ukupni = "program(){\n"
 trenutni = ""
 funkcije = ""
@@ -1016,4 +1066,9 @@ while 1:
     if flag==1:
         if ';' not in ulaz:
             main +=ulaz
+<<<<<<< HEAD
     trenutni = ""
+=======
+    trenutni = ""               
+            """
+>>>>>>> 50de33c (popravljeni neki buggovi i omogucene void fje i pozivi fja bez pridruzivanja varijabli)
