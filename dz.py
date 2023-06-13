@@ -91,7 +91,7 @@ class T(TipoviTokena):
     INFO = '~' #informacije o cvijetu
     NR = "\n" #separator naredbi
     CMP, JEDN, ED, GEN = 'ß=?%' #znak jednakosti i posebni operatori za cvjetni tip
-    PLUS, MINUS, PUTA, KROZ, ZAREZ = '+-*/,' #klasicni aritmeticki operatori za numericki tip
+    PLUS, MINUS, PUTA, ZAREZ = '+-*,' #klasicni aritmeticki operatori za numericki tip
     OO, OZ, VO, VZ, UO, UZ = '(){}[]' #npr. OO = obla otvorena
     SQLINSERT = '->' #unos u bazu podataka
     SQLFETCH = '<-' #dohvacanje iz baze podataka
@@ -335,8 +335,10 @@ class P(Parser):
                     dat = p >> T.DAT
                     p >> T.OZ
                     return PridruziIzDat(ime, dat)
-                else:
+                elif p > T.BROJ:
                     return Pridruživanje(ime, p.tipa(ime))
+                else:
+                    raise SemantičkaGreška('Varijabla je numeričkog tipa, unesite broj.')
             else:
                 return p.petlja(ime)
         elif p > T.VO:
@@ -360,7 +362,7 @@ class P(Parser):
             treci = p >> T.GENSEKV
             return Insert(prvi, drugi, treci)
         elif p >= T.SQLFETCH:
-            podatak = p >> { T.LAT_NAZ, T.FLOWERF, T.GENSEKV}
+            podatak = p >> {T.LAT_NAZ, T.FLOWERF, T.GENSEKV}
             return Fetch(podatak)
         elif p > T.FLOWERVAR:
             ime = p.ime()
@@ -371,9 +373,11 @@ class P(Parser):
                     p >> T.OO
                     dat = p >> T.DAT
                     p >> T.OZ
-                    return PridruziIzDat(ime,dat)
-                else:
+                    return PridruziIzDat(ime, dat)
+                elif p > {T.LAT_NAZ, T.FLOWERF, T.GENSEKV} :
                     return Pridruživanje(ime, p.tipa(ime))
+                else:
+                    raise SemantičkaGreška('Varijabla je cvjetnog tipa, unesite latinski naziv, cvjetnu formulu ili genetsku sekvencu biljke.')
             elif p > T.ED:
                 return p.gen_dist(ime)
             elif p > T.CMP:
@@ -426,7 +430,7 @@ class P(Parser):
         elif ime ^ T.FLOWERVAR: return p.nesto_cvjetno()
         else: assert False, f'Nepoznat tip od {ime}'
 
-    def petlja(p, kolikoPuta) -> 'Petlja': #stavljamo li da je u petlji moguca samo jedna naredba? - valjda je Dorotea ovo pitala, trebalo bi bit moguce proizvoljno mnogo naredbi -Ivana
+    def petlja(p, kolikoPuta) -> 'Petlja':
         p >> T.VO
         p >= T.NR
         izvrsiti=[]
@@ -496,6 +500,7 @@ class P(Parser):
                 return Info(p.nesto_cvjetno())
         else:
             return p >> T.BROJ
+                
 
 def izvrši(funkcije, *argv):
     funkcije['program'].pozovi(argv)
@@ -544,6 +549,7 @@ class PridruziIzDat(AST):
         f = open(novoIme, 'r')
         mem[self.ime] = f.read()
         f.close()
+        return nenavedeno
 
 class Stupac(AST):
     """Specifikacija stupca u tablici."""
@@ -915,12 +921,6 @@ class Info(AST):
 
         return int(brlat)
 
-class OneLine(AST): #cemu ovo sluzi?
-    ime: 'linija'
-    tijelo: 'naredba'
-    def izvrši(onelie, mem, unutar):
-        print("")
-
 class Funkcija(AST):
     ime: 'IME'
     parametri: 'VAR*'
@@ -971,7 +971,8 @@ class Pridruživanje(AST):
     pridruženo: 'izraz'
     def izvrši(self, mem, unutar):
         mem[self.ime] = self.pridruženo.vrijednost(mem, unutar)
-
+        return self.pridruženo.vrijednost(mem, unutar)
+        
 class Vrati(AST):
     što: 'izraz'
     def izvrši(self, mem, unutar):
@@ -1054,7 +1055,7 @@ datw("dat.txt",$num3)
 }
 ''') """
 
-proba = P('''#komentar
+""" proba = P('''#komentar
 potnapot($x){
     $y = 1
     $x{
@@ -1100,7 +1101,7 @@ program(){
     datw("dat15.txt", $a)
     #pise faktorijel od 5 u dat15.txt (5! = 120)
 }
-''')
+''') """
 
 """
 bilj('''#komentar
@@ -1159,8 +1160,10 @@ ret 0
 }
 ''')
 """
-prikaz(proba, 5)
-izvrši(proba) #naredba izvrši je ta koja pokrece
+
+
+""" prikaz(proba, 5)
+izvrši(proba) """ #naredba izvrši je ta koja pokrece
 
 """ for tablica, log in rt.imena:
     print('Tablica', tablica, '- stupci:')
