@@ -1,28 +1,25 @@
 # Pliz provjerite jel mislite da su BKG i AST-ovi u skladu s onim sta pise
 # Ivana
-* napravila sam unos iz terminala na foru while petlje jer je sav unos u proslim zadacama tak funkcioniro pa je valjda oke (iako ukljucuje dosta "varanja", ali nemam bolju ideju :( )
+
 * pushala sam datoteku proba.txt u kojoj mozete vidjeti sto sam tocno probavala upisati u terminal
 * funkcionira isto kao pythonov shell, znaci ak se unosi funkcija ona se pamti, a ak se unosi bilo sta drugo smatra se dijelom glavnom programa
 * unos ; oznacava da korisnik zeli izvršiti naredbu i nakon sto izvrsi neku naredbu moze opet izvrsavati naredbe (dakle korisnik moze u bilo kojem trenu definirati neku funkciju ili napisati naredbu, ima opciju izvršavanja naredbi jednu po jednu t.d. nakon svake upise ;, a moze i unositi proizvoljan broj naredbi)
-* trenutne restrikcije koje bi vjv trebalo popraviti su: _ako vidite jos neke restrikcije zapisite ih/ako rijesite neke retsrikcije zapisite koje ste rijesili_
-  * ~~poziv funkcije funkcionira samo ako se pridruzi nekoj varijabli i svaka funkcija mora nesto vratiti (osim main-a koji uvijek vrati 0)~~
-* __nisam testirala jos sto se tocno "smije" u smislu hoce li se program zaliti ako cvjetnoj varijabli probam pridruziti broj i slicno - mislim da bi bilo dobro da svi testiramo sve sta nam padne na pamet i da onda ovdje u section "Žalbe" napisemo sto smo testirali i sto valja/ne valja__
 # Žalbe
-* funkcija nemre primiti flowervar - popravljeno _~Ivana_
-* treba napraviti retsrikcije/provjere u ast-u Pridruživanje t.d. se numeričkoj varijabli ne može pridružiti nešto cvjetno i slično
-* treba osmisliti kak provjeriti koji je tip podatka vratila funkcija ili čitanje iz datoteke pa opet paziti je li prikladno priduruženo NUMVAR-u ili FLOWERVAR-u
-* funkcije ne mogu primiti poziv druge funkcije ili aritmeticki izraz kao argument (u primjeru 09 su mogle primiti aritmeticki izraz)
-* for petlja moze imati i NUMVAR i BROJ prije { - omoguceno _~Ivana_
-* trenutno pri citanju iz sql tablice ne pazimo na mogucnost jel fali neki podatak ( ja mislim) - zelimo li pazit na to? _~Ivana_
-* ne radi pridruzivanje funkcije tipa $x =f($y) - iz nekog razloga proguta =f kao ime funkcije umjesto da zasebno proguta = i f - treba popraviti ili cemo kao dodatan uvjet u jeziku definirati "prozračnost" koda (moraju dolaziti razmaci izmedu svega) - resolved, bila je grška u lekseru _~Ivana_
-* funkcija se ne može pozvati bez da se pridruži varijabli - popravljeno _~Ivana_
-* omogucene void fje (umjesto ret nesto moze biti i samo ret) _~Ivana_
-* parametri funkcija zasad ne mogu biti npr. obicno slovo nego se mora definirati tip - treba popraviti?
-* treba provjeriti javlja li gresku ako cvjetnoj varijabli pridruzimo broj ili poziv fje koja vraca broj i slicno
+* ~~funkcija nemre primiti flowervar - popravljeno _~Ivana_~~
+* ~~treba napraviti retsrikcije/provjere u ast-u Pridruživanje t.d. se numeričkoj varijabli ne može pridružiti nešto cvjetno i slično - popravljeno _~Ivana_~~
+* ~~treba osmisliti kak provjeriti koji je tip podatka vratila funkcija ili čitanje iz datoteke pa opet paziti je li prikladno priduruženo NUMVAR-u ili FLOWERVAR-u - popravljeno _~Dorotea_~~
+* funkcije ne mogu primiti poziv druge funkcije ili aritmeticki izraz kao argument - mozda sad mogu, treba provjeriti i napomenuti jel mogu il ne
+* ~~for petlja moze imati i NUMVAR i BROJ prije { - omoguceno _~Ivana_~~
+* ~~trenutno pri citanju iz sql tablice ne pazimo na mogucnost jel fali neki podatak ( ja mislim) - pazila _~Dorotea_ :)~~
+* ~~ne radi pridruzivanje funkcije tipa $x =f($y) - iz nekog razloga proguta =f kao ime funkcije umjesto da zasebno proguta = i f - treba popraviti ili cemo kao dodatan uvjet u jeziku definirati "prozračnost" koda (moraju dolaziti razmaci izmedu svega) - resolved, bila je grška u lekseru _~Ivana_~~
+* ~~funkcija se ne može pozvati bez da se pridruži varijabli - popravljeno _~Ivana_~~
+* ~~omogucene void fje (umjesto ret nesto moze biti i samo ret) _~Ivana_~~
+* ~~treba provjeriti javlja li gresku ako cvjetnoj varijabli pridruzimo broj ili poziv fje koja vraca broj i slicno
 * za sada smo ostavili da je upis u datoteku takav da se stari sadrzaj brise i unosi se novi, mozda ako smislimo kako bismo citali iz datoteke u slucaju da se u datoteku samo nadopise mozemo to uskladiti
-* moraju li vitice bit u novom redu - pa meni se čini da ne moraju, barem nije na testiranom stvaralo probleme _~Dorotea_
+* ~~moraju li vitice bit u novom redu - pa meni se čini da ne moraju, barem nije na testiranom stvaralo probleme _~Dorotea_~~
 * napraviti funkciju vrijednost za cmp
-* rastavi datread na dvoje datoteke - riješeno _~Dorotea_
+* provjeriti mozemo li kao povratnu vrijednost funkcije vratiti rezultat operatora CMP (kao sto mozemo npr rezultat operatora zbrajanja)
+* ~~rastavi datread na dvoje datoteke - riješeno _~Dorotea_~~
 # prije leksera
 '''
 Sto omogucavamo i kako:
@@ -36,9 +33,10 @@ Sto omogucavamo i kako:
     3) for petlja (npr. $var{$k = $k + 1} -> znaci da se €var puta izvrši naredba $k = $k+1);
     može sadržaati i više naredbi; umjesto NUMVAR mozemo imati i obican broj 
     
-    4) definicije funkcija (npr. plus($a, $b){ret $a+$b}); fja uvijek mora završiti s ret, ali on može biti
+    4) definicije funkcija (npr. $plus($a, $b){ret $a+$b}); fja uvijek mora završiti s ret, ali on može biti
     prazan (ne mora vratiti konkretnu vrijednost); kao argumente fja (odvojene zarezima) dozvoljavamo
-    samo brojeve, cvjetne formule, sekvence gena, latinske nazive, FLOWER_VAR, NUM_VAR
+    samo brojeve, cvjetne formule, sekvence gena, latinske nazive, FLOWER_VAR, NUM_VAR; za povratne vr.
+    dozvoljavamo i aritmetičke izraze (numeričke)
     
     5) funkcijski poziv (od definicije se razlikuje po tome sto nakon oble zagrade ne dode vitica);
     moze se pojaviti samostalno ili kao desna strana pridruživanja varijabli
