@@ -335,10 +335,8 @@ class P(Parser):
                     dat = p >> T.DAT
                     p >> T.OZ
                     return PridruziIzDat(ime, dat)
-                elif p > T.BROJ:
-                    return Pridruživanje(ime, p.tipa(ime))
                 else:
-                    raise SemantičkaGreška('Varijabla je numeričkog tipa, unesite broj.')
+                    return Pridruživanje(ime, p.tipa(ime))
             else:
                 return p.petlja(ime)
         elif p > T.VO:
@@ -374,10 +372,8 @@ class P(Parser):
                     dat = p >> T.DAT
                     p >> T.OZ
                     return PridruziIzDat(ime, dat)
-                elif p > {T.LAT_NAZ, T.FLOWERF, T.GENSEKV} :
-                    return Pridruživanje(ime, p.tipa(ime))
                 else:
-                    raise SemantičkaGreška('Varijabla je cvjetnog tipa, unesite latinski naziv, cvjetnu formulu ili genetsku sekvencu biljke.')
+                    return Pridruživanje(ime, p.tipa(ime))
             elif p > T.ED:
                 return p.gen_dist(ime)
             elif p > T.CMP:
@@ -549,7 +545,6 @@ class PridruziIzDat(AST):
         f = open(novoIme, 'r')
         mem[self.ime] = f.read()
         f.close()
-        return nenavedeno
 
 class Stupac(AST):
     """Specifikacija stupca u tablici."""
@@ -1161,9 +1156,57 @@ ret 0
 ''')
 """
 
+proba = P('''#komentar
+#komentar
+potnapot($x){
+    $y = 1
+    $x{
+        $y = $x * $y
+    }
+    ret $y
+#vraca x^x
+}
+potnapotlat(){
+    €c = Rosa rubiginosa
+    $p = ~ €c
+    $p = potnapot($p)
+    ret $p
+#vraca x^x za x = broj latica cvijeta
+}
+fakt($x){
+    $y = 1
+    $z = 1
+    $x{
+        $z = $z * $y
+        $y = $y + 1
+    }
+    ret $z
+#vraca x!
+}
+program(){
+    $a = 5
+    $a = potnapot($a)
+    datw("dat11.txt", $a)
+    #pise 5^5 od a u dat11.txt (5^5 = 3125)
+    €cc = Rosa rubiginosa
+    #pise Rosa rubiginosa u dat12.txt
+    $a = ~ €cc
+    potnapotlat()
+    datw("dat12.txt", $a)
+    #pise koliko latica ima cc (tj Rosa rubiginosa)
+    datw("dat13.txt", €cc)
+    €ccc = datread("dat13.txt")
+    datw("dat14.txt", €ccc)
+    #Cita i pise Rosa rubiginosa iz dat13.txt u dat14.txt
+    $a = 5
+    $a = fakt($a)
+    datw("dat15.txt", $a)
+    #pise faktorijel od 5 u dat15.txt (5! = 120)
+}
+''')
 
-""" prikaz(proba, 5)
-izvrši(proba) """ #naredba izvrši je ta koja pokrece
+prikaz(proba, 5)
+izvrši(proba)#naredba izvrši je ta koja pokrece
 
 """ for tablica, log in rt.imena:
     print('Tablica', tablica, '- stupci:')
