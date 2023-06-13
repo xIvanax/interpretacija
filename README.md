@@ -19,6 +19,7 @@
 * omogucene void fje (umjesto ret nesto moze biti i samo ret) _~Ivana_
 * parametri funkcija zasad ne mogu biti npr. obicno slovo nego se mora definirati tip - treba popraviti?
 * treba provjeriti javlja li gresku ako cvjetnoj varijabli pridruzimo broj ili poziv fje koja vraca broj i slicno
+* za sada smo ostavili da je upis u datoteku takav da se stari sadrzaj brise i unosi se novi, mozda ako smislimo kako bismo citali iz datoteke u slucaju da se u datoteku samo nadopise mozemo to uskladiti
 # zadatak
 * Jezik mora podržavati sljedeće:
   * interaktivni način rada (korisnik utipkava naredbu po naredbu),
