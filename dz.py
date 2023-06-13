@@ -538,12 +538,39 @@ class PridruziIzDat(AST):
     ime: 'IME'
     imeDat: 'DAT'
     def izvrši(self,mem,unutar):
+        s=str(self.ime)
+        p=s.find("'")
+        tip=s[0:p]
         cistoIme = self.imeDat.vrijednost(mem, unutar)
         print("ime datoteke:")
         print(self.imeDat)
         novoIme = cistoIme[1:len(cistoIme) - 1] #uklonjeni navodnici iz imena kako bi se mogao izvrsiti open
         f = open(novoIme, 'r')
-        mem[self.ime] = f.read()
+        procitaj = f.read()
+
+        if tip=="NUMVAR":
+            if procitaj.isnumeric():
+                mem[self.ime]=procitaj
+            else:
+                raise Greška("Varijabla je numerička, unesite broj.")
+        elif tip=="FLOWERVAR":
+            if procitaj.isalpha() or " " in procitaj: #potrebno je provjeriti je li latinski naziv
+                lista=procitaj.split(" ")
+                if(len(lista)==2) and procitaj[0].isupper():
+                    t=procitaj.find(" ")
+                    if procitaj[t+1].isupper():
+                        raise Greška("Očekivano malo slovo drugoj riječi u latinskom nazivu biljke.")
+                    else:
+                        mem[self.ime]=procitaj
+            elif procitaj[0] == "%": #potrebno provjerit je li genetska sekvenca ispravno unesena
+                for i in procitaj[1:]:
+                    if i not in {"A", "G", "C", "T"}:
+                        raise Greška("U genu se nalazi nepostojeća nukleobaza. Postojeće nukleobaze su A, C, T i G.")
+                mem[self.ime]=procitaj
+            elif procitaj[0] == "[" and procitaj[-1] == "]": #potrebno provjeriti je li cvjetna formula ispravno zadana
+                ...
+                #Ovdje treba napisati provjeru je li cvjetna formula u ispravnom obliku zapisana
+                
         f.close()
 
 class Stupac(AST):
@@ -965,7 +992,7 @@ class Pridruživanje(AST):
     ime: 'IME'
     pridruženo: 'izraz'
     def izvrši(self, mem, unutar):
-        mem[self.ime] = self.pridruženo.vrijednost(mem, unutar)
+        mem[self.ime] =self.pridruženo.vrijednost(mem, unutar)
         return self.pridruženo.vrijednost(mem, unutar)
         
 class Vrati(AST):
@@ -1155,7 +1182,12 @@ ret 0
 }
 ''')
 """
-
+proba = P('''#komentar
+program(){
+€cvijet=datread("dat.txt")
+datw("dat1.txt",€cvijet)
+}
+''')
 prikaz(proba, 5)
 izvrši(proba)#naredba izvrši je ta koja pokrece
 
