@@ -1215,7 +1215,7 @@ datw("dat2.txt", €drugiCvijet)
 }
 ''')
 """
-"""
+
 proba = P('''#komentar
 potnapot($x){
     $y = 1
@@ -1224,13 +1224,6 @@ potnapot($x){
     }
     ret $y
 #vraca x^x
-}
-potnapotlat(){
-    €c = Rosa rubiginosa
-    $p = ~ €c
-    $p = potnapot($p)
-    ret $p
-#vraca x^x za x = broj latica cvijeta
 }
 fakt($x){
     $y = 1
@@ -1243,27 +1236,28 @@ fakt($x){
 #vraca x!
 }
 program(){
-    $a = 5
+    $a = 6
     $a = potnapot($a)
     datw("dat11.txt", $a)
-    #pise 5^5 od a u dat11.txt (5^5 = 3125)
+    #pise (a^a) u dat11.txt
     €cc = Rosa rubiginosa
-    #pise Rosa rubiginosa u dat12.txt
-    $a = ~ €cc
-    potnapotlat()
+    ~ €cc
+    #ovo ce ispisati podatke o cvijetu, tamo cemo vidjeti da ima 5 latica
+    $a = 5
     datw("dat12.txt", $a)
-    #pise koliko latica ima cc (tj Rosa rubiginosa)
+    #pise koliko latica ima cc u dat12.txt
     datw("dat13.txt", €cc)
+    #pise Rosa rubiginosa u dat13.txt
     €ccc = datread("dat13.txt")
     datw("dat14.txt", €ccc)
     #Cita i pise Rosa rubiginosa iz dat13.txt u dat14.txt
     $a = 5
     $a = fakt($a)
     datw("dat15.txt", $a)
-    #pise faktorijel od 5 u dat15.txt (5! = 120)
+    #pise faktorijel od a u dat15.txt
 }
 ''')
-"""
+
 """
 bilj('''#komentar
 zb($a){
