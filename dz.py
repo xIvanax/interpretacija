@@ -335,10 +335,8 @@ class P(Parser):
                     dat = p >> T.DAT
                     p >> T.OZ
                     return PridruziIzDat(ime, dat)
-                elif p > T.BROJ:
-                    return Pridruživanje(ime, p.tipa(ime))
                 else:
-                    raise SemantičkaGreška('Varijabla je numeričkog tipa, unesite broj.')
+                    return Pridruživanje(ime, p.tipa(ime))
             else:
                 return p.petlja(ime)
         elif p > T.VO:
@@ -374,10 +372,8 @@ class P(Parser):
                     dat = p >> T.DAT
                     p >> T.OZ
                     return PridruziIzDat(ime, dat)
-                elif p > {T.LAT_NAZ, T.FLOWERF, T.GENSEKV} :
-                    return Pridruživanje(ime, p.tipa(ime))
                 else:
-                    raise SemantičkaGreška('Varijabla je cvjetnog tipa, unesite latinski naziv, cvjetnu formulu ili genetsku sekvencu biljke.')
+                    return Pridruživanje(ime, p.tipa(ime))
             elif p > T.ED:
                 return p.gen_dist(ime)
             elif p > T.CMP:
@@ -549,7 +545,6 @@ class PridruziIzDat(AST):
         f = open(novoIme, 'r')
         mem[self.ime] = f.read()
         f.close()
-        return nenavedeno
 
 class Stupac(AST):
     """Specifikacija stupca u tablici."""
@@ -1161,9 +1156,8 @@ ret 0
 ''')
 """
 
-
-""" prikaz(proba, 5)
-izvrši(proba) """ #naredba izvrši je ta koja pokrece
+prikaz(proba, 5)
+izvrši(proba)#naredba izvrši je ta koja pokrece
 
 """ for tablica, log in rt.imena:
     print('Tablica', tablica, '- stupci:')
