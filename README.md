@@ -20,9 +20,9 @@
 * parametri funkcija zasad ne mogu biti npr. obicno slovo nego se mora definirati tip - treba popraviti?
 * treba provjeriti javlja li gresku ako cvjetnoj varijabli pridruzimo broj ili poziv fje koja vraca broj i slicno
 * za sada smo ostavili da je upis u datoteku takav da se stari sadrzaj brise i unosi se novi, mozda ako smislimo kako bismo citali iz datoteke u slucaju da se u datoteku samo nadopise mozemo to uskladiti
-* moraju li vitice bit u novom redu
-* napraviti funkciju vriejednost za cmp
-* rastavi datread na dvoje datoteke
+* moraju li vitice bit u novom redu - pa meni se čini da ne moraju, barem nije na testiranom stvaralo probleme _~Dorotea_
+* napraviti funkciju vrijednost za cmp
+* rastavi datread na dvoje datoteke - riješeno _~Dorotea_
 # prije leksera
 '''
 Sto omogucavamo i kako:
