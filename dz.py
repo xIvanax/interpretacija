@@ -534,16 +534,119 @@ class UpisiUDat(AST): #omoguceno upisivanje bilo cega (broja, varijable, stringa
         f.write(string)
         f.close()
 
+
+#pomocna funkcija koja provjerava jesu li u unosu cvjetne formule ispravne brojevne vrijednosti
+#prihvacamo brojeve 2-12, te > to iznacava vise od 12
+def ffnumbers(p, s):
+    if not s[p] == '>':
+        if s[p] == '1':
+            if s[p+1] in {'3', '4', '5', '6', '7', '8', '9'}:
+                string = "First formulation option:\n\tBracts(optional): 'B'\n\tBracteoles(optional): 'Bt'\n\tTepals: 'P' or 'CaCo'\n\tStamens: 'A'\n\tCarpels: 'G'\n\tOvules(optional): 'V' or 'O'\n"
+                string += "Second formulation option:\n\tBracts(optional): 'B'\n\tBracteoles(optional): 'Bt'\n\tSepals and petals: 'K' or 'Ca' and then 'C' or 'Co'\n\tStamens: 'A'\n\tCarpels: 'G'\n\tOvules(optional): 'V' or 'O'\n"
+                string += "Note that each label must be followed by a number between 1 and 12 or by the symbol '>' which means 'more than 12'"
+                raise Greška("Neispravno formulirana cvjetna formula. Proučite sljedeće upute za ispravnu formulaciju:\n"+string)
+            elif s[p+1] in {'0', '1', '2'}:
+                return 2
+        elif s[p] in {'2', '3', '4', '5', '6', '7', '8', '9'}:
+            return 1
+    else:
+        return 1
 class PridruziIzDat(AST):
     ime: 'IME'
     imeDat: 'DAT'
     def izvrši(self,mem,unutar):
+        s=str(self.ime)
+        p=s.find("'")
+        tip=s[0:p]
         cistoIme = self.imeDat.vrijednost(mem, unutar)
         print("ime datoteke:")
         print(self.imeDat)
         novoIme = cistoIme[1:len(cistoIme) - 1] #uklonjeni navodnici iz imena kako bi se mogao izvrsiti open
         f = open(novoIme, 'r')
-        mem[self.ime] = f.read()
+        procitaj = f.read()
+
+        if tip=="NUMVAR":
+            if procitaj.isnumeric():
+                mem[self.ime]=procitaj
+            else:
+                raise Greška("Varijabla je numerička, unesite broj.")
+        elif tip=="FLOWERVAR":
+            if procitaj.isalpha() or " " in procitaj: #potrebno je provjeriti je li latinski naziv
+                lista=procitaj.split(" ")
+                if(len(lista)==2) and procitaj[0].isupper():
+                    t=procitaj.find(" ")
+                    if procitaj[t+1].isupper():
+                        raise Greška("Očekivano malo slovo drugoj riječi u latinskom nazivu biljke.")
+                    else:
+                        mem[self.ime]=procitaj
+            elif procitaj[0] == "%": #potrebno provjerit je li genetska sekvenca ispravno unesena
+                for i in procitaj[1:]:
+                    if i not in {"A", "G", "C", "T"}:
+                        raise Greška("U genu se nalazi nepostojeća nukleobaza. Postojeće nukleobaze su A, C, T i G.")
+                mem[self.ime]=procitaj
+            elif procitaj[0] == "[" and procitaj[-1] == "]": #potrebno provjeriti je li cvjetna formula ispravno zadana
+                flag = 0
+                i = 1
+                if procitaj[i] == 'B': #bracts (optional)
+                    i+=1
+                    if not  procitaj[i] == 't':
+                        i+=ffnumbers(i+1, procitaj)+1
+                    else:
+                        i+=ffnumbers(i+1, procitaj)+1
+                        flag = 1
+                if flag == 0:
+                    if procitaj[i] == 'B' and procitaj[i+1] == 't': #bracteoles (optional)
+                        i+=2
+                        i+=ffnumbers(i, procitaj)
+                if procitaj[i] in {'P', 'C'}: #tepals
+                    if procitaj[i:i+4] == "CaCo":
+                        i+=4
+                        i+=ffnumbers(i, procitaj)
+                    else:
+                        i+=ffnumbers(i+1, procitaj)+1
+                        
+                    if procitaj[i] == 'A': #stamens
+                        i+=ffnumbers(i+1, procitaj)+1
+                    else:
+                        raise Greška("Neispravna cvjetna formula, nedostaje A.")
+                    
+                    if procitaj[i] == 'G':
+                        i+=ffnumbers(i+1, procitaj)+1
+                    else:
+                        raise Greška("Neispravna cvjetna formula, nedostaje G.")
+                    
+                    if procitaj[i] in {'O', 'V'}: #ovules (optional)
+                        i+=ffnumbers(i+1, procitaj)+1
+
+                elif procitaj[i] in {'K', 'C'}: #sepals and petals
+                    if procitaj[i:i+2] == "Ca":
+                        i+=ffnumbers(i+2, procitaj)+2
+                    else:
+                        i+=ffnumbers(i+1, procitaj)+1
+                        
+                    if procitaj[i] == 'C':
+                        i+=1
+                        if procitaj[i] == 'o':
+                            i+=ffnumbers(i+1, procitaj)+1
+                        else:
+                            i+=ffnumbers(i, procitaj)
+                            
+                    if procitaj[i] == 'A': #stamens
+                        i+=ffnumbers(i+1, procitaj)+1
+                    else:
+                        raise Greška("Neispravna cvjetna formula, nedostaje A.")
+                    
+                    if procitaj[i] == 'G':
+                        i+=ffnumbers(i+1, procitaj)+1
+                    else:
+                        raise Greška("Neispravna cvjetna formula, nedostaje G.")
+                    
+                    if procitaj[i] in {'O', 'V'}: #ovules (optional)
+                        i+=ffnumbers(i+1, procitaj)+1
+                    
+                    mem[self.ime]=procitaj
+                    
+                
         f.close()
 
 class Stupac(AST):
@@ -965,7 +1068,7 @@ class Pridruživanje(AST):
     ime: 'IME'
     pridruženo: 'izraz'
     def izvrši(self, mem, unutar):
-        mem[self.ime] = self.pridruženo.vrijednost(mem, unutar)
+        mem[self.ime] =self.pridruženo.vrijednost(mem, unutar)
         return self.pridruženo.vrijednost(mem, unutar)
         
 class Vrati(AST):
@@ -1156,8 +1259,8 @@ ret 0
 ''')
 """
 
-prikaz(proba, 5)
-izvrši(proba)#naredba izvrši je ta koja pokrece
+""" prikaz(proba, 5)
+izvrši(proba) """#naredba izvrši je ta koja pokrece
 
 """ for tablica, log in rt.imena:
     print('Tablica', tablica, '- stupci:')
