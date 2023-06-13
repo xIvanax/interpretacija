@@ -1,0 +1,20 @@
+#komentar
+program(){
+->Lilium candidum->[P3A3G3]->%ACGTCACGCACATTAC
+#Lilium candidum, [P3A3G3], %ACGTCACGCACATTAC unesen u bazu
+<-Lilium candidum
+<-Rosa rubiginosa
+<-Rosa rugosa
+<-Olea europaea
+#ispiše podatke iz baze za biljke
+€c1 = Lilium candidum
+€c1 ? Rosa rubiginosa ? Rosa rugosa
+#ispiše dva cvijeta iz niza s najsličnijim genima
+datw("dat21.txt", €c1)
+€c2 = datread("dat21.txt")
+#procita iz dat21.txt i pospremi u c2
+€c2 ? Rosa rubiginosa ? Rosa rugosa
+#isti ispis kao prije
+€c2 ? Rosa rubiginosa ? Olea europaea
+<-%ACGTCACGCACATTAC
+}
