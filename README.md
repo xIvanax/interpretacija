@@ -23,6 +23,73 @@
 * moraju li vitice bit u novom redu
 * napraviti funkciju vriejednost za cmp
 * rastavi datread na dvoje datoteke
+# prije leksera
+'''
+Sto omogucavamo i kako:
+    1) korisnik upisuje naredbu po naredbu (omoguceno pomocu while petlje na kraju koda;
+        obavezni su prelasci u novi red (bez dozvoljenih višestrukih novih redova; zatvorene vitice
+        moraju biti u novom retku), a kraj unošenja naredbi označava se pomoću ';' što
+        zapocinje izvršavanje do sad unesenih naredbi)
+        
+    2) varijable (cvjetnog tipa se oznacavaju kao €varijabla, a numeričkog kao $var)
+    
+    3) for petlja (npr. $var{$k = $k + 1} -> znaci da se €var puta izvrši naredba $k = $k+1);
+    može sadržaati i više naredbi; umjesto NUMVAR mozemo imati i obican broj 
+    
+    4) definicije funkcija (npr. plus($a, $b){ret $a+$b}); fja uvijek mora završiti s ret, ali on može biti
+    prazan (ne mora vratiti konkretnu vrijednost); kao argumente fja (odvojene zarezima) dozvoljavamo
+    samo brojeve, cvjetne formule, sekvence gena, latinske nazive, FLOWER_VAR, NUM_VAR
+    
+    5) funkcijski poziv (od definicije se razlikuje po tome sto nakon oble zagrade ne dode vitica);
+    moze se pojaviti samostalno ili kao desna strana pridruživanja varijabli
+    
+    6) operator ~ (alias info) koristi se za dobivanje raznih informacija o biljci određenih
+        njenom cvjetnom formulom t.d. se stavi npr. info €cvijet; umjesto cvjetne varijable može doći
+        i sekvenca gena ili latinski naziv ili cvjetna formula
+            - podaci o biljci se ispisuju i ništa se ne vraća
+    
+    7) print u datoteku pomocu kljucne rijeci 'datw'; npr. datw("ime.txt", nesto) gdje nesto moze biti
+    cvjetna varijabla, numericka varijabla, broj, cvjetna formula, sekvenca gena ili latinski naziv
+    
+    8) citanje iz datoteke pomocu kljucne rijeci 'datread'; npr $x = datread("ime.txt")
+    
+    9) konacni tip podataka (flower formula
+        nalazit ce se u uglatim zagradama i sastojat ce se od velikih i malih slova i brojeva;
+        (https://en.wikipedia.org/wiki/Floral_formula)
+        
+    7) potencijalno beskonacni tip podatka (sekvence dna - zapocinje s % i smije sadržavati samo
+        slova A, C, T, G)
+        
+    8) operator ? (alias ed) koristi se za racunanje genetske udaljenosti(evolutionary distance);
+        to je višemjesni operator sto znaci da se moze pozvati na proizvoljno mnogo biljaka;
+        tim biljkama ce se genomi usporedivati do duljine biljke s najkracim genomom i
+        ispisat ce se one dvije biljke s najmanjom razlikom, a vratiti ce na koliko se mjesta podudaraju
+        geni u genetskom kodu; kao i info moze se pozvati na latinskom nazivu, sekvencama gena, cvjetnoj 
+        formuli ili cvjetnoj varijabli
+            -unos: nesto ? Rosa rubiginosa ? Rosa rugosa, gdje je nesto latinski naziv, sekvenca gena,
+            cvjetna formula neke biljke ili cvjetna varijabla
+            -analogan unos: €cvijet cmp Rosa rubiginosa cmp Rosa rugosa
+        
+    9) operator ß (alias cmp) koristi se za pronalazak genetski najblizeg cvijeta, višemjesni je;
+        npr "Rosa Rubiginosa ß Rosa rugosa ß Olea europaea" ce odlučiti je li Rosa Rugosa
+        ili Olea europaea genetski bliža cvijetu Rosa Rubiginosa; takoder se moze proslijediti latinski naziv,
+        genetska sekvenca, cvjetna formula biljke ili cvjetna varijabla
+            -omogucen je i unos: Olea europaea ß, koji ce genetski kod zadane biljke usporediti sa svim
+            genetskim kodovima biljaka koji se nalaze u tablici podataka
+            -unos: Citrus limon ß Acer palmatum ß, usporedit ce genetske kodove Citrus limona i Acera palmatuma,
+            nece pretrazivati bazu (dozvoljen je dangling ß)
+            
+    10) sql naredba za unos cvijeta u tablicu pomocu operator '->' (alias: unesi)
+            -primjer: ->Rosa rubiginosa->[K5C5AG10]->%ATGCTGACGTACGTTA
+            -primjer: unesi Rosa rubiginosa unesi [K5C5AG10] unesi %ATGCTGACGTACGTTA
+        gornje naredbe unose u tablicu redak gdje je ime Rosa rubiginosa, cvjetna formula je [K5C5AG10])
+        
+    11) sql naredba za pronalazak podataka o cvijetu iz tablice pomocu operatora '<-' (alias: dohvati)
+            -unos: <-Rosa rubiginosa, ispis: Rosa rubiginosa  [K5C5AG10]  %ATGCTGACGTACGTTA
+            -analogni unos: dohvati Rosa rubiginosa
+        
+    napomena: korisnik ne moze definirati funkciju s imenom 'program' jer je to rezervirano za main
+'''
 # zadatak
 * Jezik mora podržavati sljedeće:
   * interaktivni način rada (korisnik utipkava naredbu po naredbu),
