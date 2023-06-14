@@ -1,11 +1,11 @@
 # Pliz provjerite jel mislite da su BKG i AST-ovi u skladu s onim sta pise
-# Ivana
-facts:
+
+# facts:
     funk1(funk2) radi
     funk1($a+1) radi
     datw("ayy.txt", funk($a)) ne radi
     u terminalu nakon unosa unijeti \n pa onda ;
-
+# Ivana
 * pushala sam datoteku proba.txt u kojoj mozete vidjeti sto sam tocno probavala upisati u terminal
 * funkcionira isto kao pythonov shell, znaci ak se unosi funkcija ona se pamti, a ak se unosi bilo sta drugo smatra se dijelom glavnom programa
 * unos ; oznacava da korisnik zeli izvršiti naredbu i nakon sto izvrsi neku naredbu moze opet izvrsavati naredbe (dakle korisnik moze u bilo kojem trenu definirati neku funkciju ili napisati naredbu, ima opciju izvršavanja naredbi jednu po jednu t.d. nakon svake upise ;, a moze i unositi proizvoljan broj naredbi)
@@ -13,14 +13,14 @@ facts:
 * ~~funkcija nemre primiti flowervar - popravljeno _~Ivana_~~
 * ~~treba napraviti retsrikcije/provjere u ast-u Pridruživanje t.d. se numeričkoj varijabli ne može pridružiti nešto cvjetno i slično - popravljeno _~Ivana_~~
 * ~~treba osmisliti kak provjeriti koji je tip podatka vratila funkcija ili čitanje iz datoteke pa opet paziti je li prikladno priduruženo NUMVAR-u ili FLOWERVAR-u - popravljeno _~Dorotea_~~
-* funkcije ne mogu primiti poziv druge funkcije ili aritmeticki izraz kao argument - mozda sad mogu, treba provjeriti i napomenuti jel mogu il ne
+* ~~funkcije ne mogu primiti poziv druge funkcije ili aritmeticki izraz kao argument - mozda sad mogu, treba provjeriti i napomenuti jel mogu il ne _~Kiki_ ~~
 * ~~for petlja moze imati i NUMVAR i BROJ prije { - omoguceno _~Ivana_~~
 * ~~trenutno pri citanju iz sql tablice ne pazimo na mogucnost jel fali neki podatak ( ja mislim) - pazila _~Dorotea_ :)~~
 * ~~ne radi pridruzivanje funkcije tipa $x =f($y) - iz nekog razloga proguta =f kao ime funkcije umjesto da zasebno proguta = i f - treba popraviti ili cemo kao dodatan uvjet u jeziku definirati "prozračnost" koda (moraju dolaziti razmaci izmedu svega) - resolved, bila je grška u lekseru _~Ivana_~~
 * ~~funkcija se ne može pozvati bez da se pridruži varijabli - popravljeno _~Ivana_~~
 * ~~omogucene void fje (umjesto ret nesto moze biti i samo ret) _~Ivana_~~
 * ~~treba provjeriti javlja li gresku ako cvjetnoj varijabli pridruzimo broj ili poziv fje koja vraca broj i slicno~~
-* za sada smo ostavili da je upis u datoteku takav da se stari sadrzaj brise i unosi se novi, mozda ako smislimo kako bismo citali iz datoteke u slucaju da se u datoteku samo nadopise mozemo to uskladiti
+* ~~za sada smo ostavili da je upis u datoteku takav da se stari sadrzaj brise i unosi se novi, mozda ako smislimo kako bismo citali iz datoteke u slucaju da se u datoteku samo nadopise mozemo to uskladiti - nije me više briga _~Ivana_ ~~
 * ~~moraju li vitice bit u novom redu - pa meni se čini da ne moraju, barem nije na testiranom stvaralo probleme _~Dorotea_~~
 * napraviti funkciju vrijednost za cmp
 * provjeriti mozemo li kao povratnu vrijednost funkcije vratiti rezultat operatora CMP (kao sto mozemo npr rezultat operatora zbrajanja)
