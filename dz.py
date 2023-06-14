@@ -761,7 +761,7 @@ class Insert(AST): #unos podataka u bazu
                     elif stupac=="FF":
                         pristup.objekt.rows.append(self.drugi.vrijednost(mem,unutar))
                     elif stupac=="GS":
-                        pristup.objekt.rows.append(self.treci.vrijednost(mem,unutar)[1:len(self.treci.vrijednost(mem,unutar))]) #jer se ucita i %
+                        pristup.objekt.rows.append(self.treci.vrijednost(mem,unutar))
         return
 
 class Fetch(AST): #na temelju zadane cvjetne varijable dohvaca sve podatke o toj biljci
@@ -1157,7 +1157,6 @@ class Info(AST):
                 if not ff[p+1].isdigit(): print("Biljka sadrži jednu vanjsku laticu.")
                 else: print("Biljka sadrži ", ff[p+1]+ff[p+2], " vanjskih latica.")
 
-        return vratiti
 
 class OneLine(AST): #cemu ovo sluzi?
     ime: 'linija'
@@ -1342,49 +1341,20 @@ datw("dat2.txt", €drugiCvijet)
 }
 ''')
 """
-"""isprobano (lekser/parser)
 proba = P('''#komentar
-$potnapot($x){
-    $y = 1
-    $x{
-        $y = $x * $y
-    }
-    ret $y
-#vraca x^x
+€compnw(€c){
+    €c cmp
+    datw("dat31.txt", €c)
+    ret
 }
-$fakt($x){
-    $y = 1
-    $z = 1
-    $x{
-        $z = $z * $y
-        $y = $y + 1
-    }
-    ret $z
-#vraca x!
-}
+#zapise c u dat31.txt i ispise najslicniji njemu
 program(){
-    $a = 6
-    $a = $potnapot($a)
-    datw("dat11.txt", $a)
-    #pise (a^a) u dat11.txt
-    €cc = Rosa rubiginosa
-    ~ €cc
-    #ovo ce ispisati podatke o cvijetu, tamo cemo vidjeti da ima 5 latica
-    $a = 5
-    datw("dat12.txt", $a)
-    #pise koliko latica ima cc u dat12.txt
-    datw("dat13.txt", €cc)
-    #pise Rosa rubiginosa u dat13.txt
-    €ccc = datread("dat13.txt")
-    datw("dat14.txt", €ccc)
-    #Cita i pise Rosa rubiginosa iz dat13.txt u dat14.txt
-    $a = 5
-    $a = $fakt($a)
-    datw("dat15.txt", $a)
-    #pise faktorijel od a u dat15.txt
+->Lilium candidum->[P3A3G3]->%ACGTCACGCACATTAC
+€c1 = Rosa rubiginosa
+€compnw(€c1)
+#sad vidimo koja je najslicnija Rosi rubiginos
 }
 ''')
-"""
 """isprobano (lekser/parser)
 proba = P('''#komentar
 $zb($a){
@@ -1439,8 +1409,8 @@ datw("dat.txt",$num3)
 }
 ''')
 """
-#prikaz(proba, 5)
-#izvrši(proba) #naredba izvrši je ta koja pokrece
+prikaz(proba, 5)
+izvrši(proba) #naredba izvrši je ta koja pokrece
 
 """ for tablica, log in rt.imena:
     print('Tablica', tablica, '- stupci:')
