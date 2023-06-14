@@ -3,47 +3,47 @@ Sto omogucavamo i kako:
     1) korisnik upisuje naredbu po naredbu (omoguceno pomocu while petlje na kraju koda;
         obavezni su prelasci u novi red, a kraj unošenja naredbi označava se pomoću ';' što
         zapocinje izvršavanje do sad unesenih naredbi)
-        
+
     2) varijable (cvjetnog tipa se oznacavaju kao €varijabla, a numeričkog kao $var)
-    
+
     3) for petlja (npr. $var{$k = $k + 1} -> znaci da se €var puta izvrši naredba $k = $k+1);
-    umjesto NUMVAR mozemo imati i obican broj 
-    
+    umjesto NUMVAR mozemo imati i obican broj
+
     4) definicije funkcija (npr. $plus($a, $b){ret $a+$b}); fja uvijek mora završiti s ret, ali on može biti
     prazan (ne mora vratiti konkretnu vrijednost); kao argumente fja (odvojene zarezima) dozvoljavamo
     samo brojeve, cvjetne formule, sekvence gena, latinske nazive, FLOWER_VAR, NUM_VAR; za povratne vr.
     dozvoljavamo i aritmetičke izraze (numeričke) i izraz s operatorom CMP
-    
+
     5) funkcijski poziv (od definicije se razlikuje po tome sto nakon oble zagrade ne dode vitica);
     moze se pojaviti samostalno ili kao desna strana pridruživanja varijabli
-    
+
     6) operator ~ (alias info) koristi se za dobivanje raznih informacija o biljci određenih
         njenom cvjetnom formulom t.d. se stavi npr. info €cvijet; umjesto cvjetne varijable može doći
         i sekvenca gena ili latinski naziv ili cvjetna formula
             -podaci o biljci se ispisuju
-    
+
     7) print u datoteku pomocu kljucne rijeci 'datw'; npr. datw("ime.txt", nesto) gdje nesto moze biti
     cvjetna varijabla, numericka varijabla, broj, cvjetna formula, sekvenca gena ili latinski naziv
-    
+
     8) citanje iz datoteke pomocu kljucne rijeci 'datread'; npr $x = datread("ime.txt")
-    
+
     9) konacni tip podataka (flower formula
         nalazit ce se u uglatim zagradama i sastojat ce se od velikih i malih slova i brojeva;
         (https://en.wikipedia.org/wiki/Floral_formula)
-        
+
     7) potencijalno beskonacni tip podatka (sekvence dna - zapocinje s % i smije sadržavati samo
         slova A, C, T, G)
-        
+
     8) operator ? (alias ed) koristi se za racunanje genetske udaljenosti(evolutionary distance);
         to je višemjesni operator sto znaci da se moze pozvati na proizvoljno mnogo biljaka;
         tim biljkama ce se genomi usporedivati do duljine biljke s najkracim genomom i
         ispisat ce se one dvije biljke s najmanjom razlikom, a vratiti ce na koliko se mjesta podudaraju
-        geni u genetskom kodu; kao i info moze se pozvati na latinskom nazivu, sekvencama gena, cvjetnoj 
+        geni u genetskom kodu; kao i info moze se pozvati na latinskom nazivu, sekvencama gena, cvjetnoj
         formuli ili cvjetnoj varijabli
             -unos: €cvijet ? Rosa rubiginosa ? Rosa rugosa, gdje je €cvijet latinski naziv, sekvenca gena ili
             cvjetna formula neke biljke
             -analogan unos: €cvijet cmp Rosa rubiginosa cmp Rosa rugosa
-        
+
     9) operator ß (alias cmp) koristi se za pronalazak genetski najblizeg cvijeta, višemjesni je;
         npr "Rosa Rubiginosa ß Rosa rugosa ß Olea europaea" ce odlučiti je li Rosa Rugosa
         ili Olea europaea genetski bliža cvijetu Rosa Rubiginosa; takoder se moze proslijediti latinski naziv,
@@ -52,16 +52,16 @@ Sto omogucavamo i kako:
             genetskim kodovima biljaka koji se nalaze u tablici podataka
             -unos: Citrus limon ß Acer palmatum ß, usporedit ce genetske kodove Citrus limona i Acera palmatuma,
             nece pretrazivati bazu
-            
+
     10) sql naredba za unos cvijeta u tablicu pomocu operator '->' (alias: unesi)
             -primjer: ->Rosa rubiginosa->[K5C5AG10]->ATGCTGACGTACGTTA
             -primjer: unesi Rosa rubiginosa unesi [K5C5AG10] unesi ATGCTGACGTACGTTA
         gornje naredbe unose u tablicu redak gdje je ime Rosa rubiginosa, cvjetna formula je K5C5AG10)
-        
+
     11) sql naredba za pronalazak podataka o cvijetu iz tablice pomocu operatora '<-' (alias: dohvati)
             -unos: <-Rosa rubiginosa, ispis: Rosa rubiginosa  [K5C5AG10]  ATGCTGACGTACGTTA
             -analogni unos: dohvati Rosa rubiginosa
-        
+
     napomena: pojedine naredbe u jeziku moraju biti odvojene s \n
     napomena: korisnik ne moze definirati funkciju s imenom 'program' jer je to rezervirano za main
 '''
@@ -410,11 +410,11 @@ class P(Parser):
             return p.petlja(p >> T.BROJ) #ostale smo slučajeve riješili kod NUMVAR
         elif p >= T.INFO:
             return Info(p.nesto_cvjetno())
-        else: 
+        else:
             cvijet = p >> {T.LAT_NAZ, T.GENSEKV, T.FLOWERF}
-            if p > T.ED: 
+            if p > T.ED:
                 return p.gen_dist(cvijet)
-            else: 
+            else:
                 return p.closest(cvijet)
 
     def gen_dist(p, first): #operator ED
@@ -510,7 +510,7 @@ class P(Parser):
 
     def član(p) -> 'Umnožak|faktor':
         faktori = [p.faktor()]
-        while p >= T.PUTA: 
+        while p >= T.PUTA:
             faktori.append(p.faktor())
         return Umnožak.ili_samo(faktori)
 
@@ -585,7 +585,7 @@ def ffnumbers(p, s):
         return 1
     else:
         return 0
-    
+
 class PridruziIzDatN(AST): #pridruzivanje procitanog iz datoteke numerickoj varijabli
     ime: 'IME'
     imeDat: 'DAT'
@@ -596,7 +596,7 @@ class PridruziIzDatN(AST): #pridruzivanje procitanog iz datoteke numerickoj vari
         novoIme = cistoIme[1:len(cistoIme) - 1] #uklonjeni navodnici iz imena kako bi se mogao izvrsiti open
         f = open(novoIme, 'r')
         procitaj = f.read()
-        
+
         #u datoteci moze pisati bilo sto, pa je potrebno provjeriti pridruzujemo li ispravne vrijednosti
         if procitaj.isnumeric():
             mem[self.ime]=procitaj
@@ -604,7 +604,7 @@ class PridruziIzDatN(AST): #pridruzivanje procitanog iz datoteke numerickoj vari
             raise Greška("Varijabla je numerička, unesite broj.")
 
         f.close()
-    
+
 class PridruziIzDatF(AST): #pridruzivanje procitanog iz datoteke numerickoj varijabli
     ime: 'IME'
     imeDat: 'DAT'
@@ -615,7 +615,7 @@ class PridruziIzDatF(AST): #pridruzivanje procitanog iz datoteke numerickoj vari
         novoIme = cistoIme[1:len(cistoIme) - 1] #uklonjeni navodnici iz imena kako bi se mogao izvrsiti open
         f = open(novoIme, 'r')
         procitaj = f.read()
-        
+
         #u datoteci moze pisati bilo sto, pa je potrebno provjeriti pridruzujemo li ispravne vrijednosti
         if procitaj.isalpha() or " " in procitaj: #potrebno je provjeriti je li latinski naziv
             lista=procitaj.split(" ")
@@ -625,13 +625,13 @@ class PridruziIzDatF(AST): #pridruzivanje procitanog iz datoteke numerickoj vari
                     raise Greška("Očekivano malo slovo drugoj riječi u latinskom nazivu biljke.")
                 else:
                     mem[self.ime]=procitaj
-                    
+
         elif procitaj[0] == "%": #potrebno provjerit je li genetska sekvenca ispravno unesena
             for i in procitaj[1:]:
                 if i not in {"A", "G", "C", "T"}:
                     raise Greška("U genu se nalazi nepostojeća nukleobaza. Postojeće nukleobaze su A, C, T i G.")
             mem[self.ime]=procitaj
-            
+
         elif procitaj[0] == "[" and procitaj[-1] == "]": #potrebno provjeriti je li cvjetna formula ispravno zadana
             flag = 0
             i = 1
@@ -652,17 +652,17 @@ class PridruziIzDatF(AST): #pridruzivanje procitanog iz datoteke numerickoj vari
                     i+=ffnumbers(i, procitaj)
                 else:
                     i+=ffnumbers(i+1, procitaj)+1
-                        
+
                 if procitaj[i] == 'A': #stamens
                     i+=ffnumbers(i+1, procitaj)+1
                 else:
                     raise Greška("Neispravna cvjetna formula, nedostaje A.")
-                    
+
                 if procitaj[i] == 'G':
                     i+=ffnumbers(i+1, procitaj)+1
                 else:
                     raise Greška("Neispravna cvjetna formula, nedostaje G.")
-                    
+
                 if procitaj[i] in {'O', 'V'}: #ovules (optional)
                     i+=ffnumbers(i+1, procitaj)+1
 
@@ -671,29 +671,29 @@ class PridruziIzDatF(AST): #pridruzivanje procitanog iz datoteke numerickoj vari
                     i+=ffnumbers(i+2, procitaj)+2
                 else:
                     i+=ffnumbers(i+1, procitaj)+1
-                        
+
                 if procitaj[i] == 'C':
                     i+=1
                     if procitaj[i] == 'o':
                         i+=ffnumbers(i+1, procitaj)+1
                     else:
                         i+=ffnumbers(i, procitaj)
-                            
+
                 if procitaj[i] == 'A': #stamens
                     i+=ffnumbers(i+1, procitaj)+1
                 else:
                     raise Greška("Neispravna cvjetna formula, nedostaje A.")
-                    
+
                 if procitaj[i] == 'G':
                     i+=ffnumbers(i+1, procitaj)+1
                 else:
                     raise Greška("Neispravna cvjetna formula, nedostaje G.")
-                    
+
                 if procitaj[i] in {'O', 'V'}: #ovules (optional)
                     i+=ffnumbers(i+1, procitaj)+1
-                    
+
             mem[self.ime]=procitaj
-                      
+
         f.close()
 
 class Stupac(AST):
@@ -712,9 +712,9 @@ class Create(AST):
         pristup = rt.imena[naredba.tablica] = Memorija(redefinicija=False)
         for stupac in naredba.specifikacije:
             pristup[stupac.ime] = PristupLog(stupac)
-        
+
 #pomocna funkcija koja kao parametre prima ime stupca kojeg pretrazujemo, te podatak koji trazimo
-#vraca redni broj mjesta na kojemu se podatak nalazi u tom stupcu    
+#vraca redni broj mjesta na kojemu se podatak nalazi u tom stupcu
 def pronadiBroj(imeStupca, podatak):
     broj=-1
     for tablica,log in rt.imena:
@@ -751,7 +751,7 @@ class Insert(AST): #unos podataka u bazu
         #prvo provjeravamo nalazi li se podatak koji se pokusava unjeti u bazi
         provjera=-1
         provjera=pronadiBroj("LN",self.prvi.vrijednost(mem,unutar))
-        
+
         #ako se podatak ne nalazi u bazi onda ga unosimo
         if(provjera==-1): #podatak se ne nalazi u tablici, stoga ga sada unosimo
             for tablica,log in rt.imena:
@@ -780,7 +780,7 @@ class Fetch(AST): #na temelju zadane cvjetne varijable dohvaca sve podatke o toj
                 raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
             ff=vratiPodatak("FF",broj)
             gs=vratiPodatak("GS",broj)
-                          
+
         elif "[" in self.flower.vrijednost(mem,unutar): #korisnik je unio cvijetnu fomulu
             ff=self.flower.vrijednost(mem,unutar)
             broj=-1
@@ -789,7 +789,7 @@ class Fetch(AST): #na temelju zadane cvjetne varijable dohvaca sve podatke o toj
                 raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
             ln=vratiPodatak("LN",broj)
             gs=vratiPodatak("GS",broj)
-                                    
+
         else: #korisnik je unio genetski kod
             broj=-1
             gs=self.flower.vrijednost(mem,unutar)
@@ -799,7 +799,7 @@ class Fetch(AST): #na temelju zadane cvjetne varijable dohvaca sve podatke o toj
                 raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
             ln=vratiPodatak("LN",broj)
             ff=vratiPodatak("FF",broj)
-        
+
         print(ln+" "+ff+" "+gs) #ispis dohvacenih podataka
         return
 
@@ -808,7 +808,7 @@ class Closest(AST):
     def izvrši(self,mem,unutar):
         genKodovi=[] #lista genetskih kodova koje usporedujemo
         broj=-1
-        
+
         #prvo trazimo redni broj i genetski kod prve (mozda i jedine) biljke u listi
         #kako je moguce unjeti latinski naziv, cvjetnu formulu ili genetsku sekvencu provjeravamo sve mogucnosti
         if " " in self.flowers[0].vrijednost(mem,unutar): #imamo latinski naziv
@@ -816,8 +816,8 @@ class Closest(AST):
             if broj==-1:
                 raise GreškaIzvođenja('Ne postoji objekt ' + self.flowers[0].vrijednost(mem,unutar) + ' u tablici')
             genKodovi.append(vratiPodatak("GS",broj))
-                    
-        elif "[" in self.flowers[0].vrijednost(mem,unutar): #imamo cvijetnu fomulu 
+
+        elif "[" in self.flowers[0].vrijednost(mem,unutar): #imamo cvijetnu fomulu
             broj=-1
             broj=pronadiBroj("FF", self.flowers[0].vrijednost(mem,unutar))
             if broj==-1:
@@ -826,7 +826,7 @@ class Closest(AST):
 
         else: #imamo genetski kod
             genKodovi.append(self.flowers[0].vrijednost(mem,unutar))
-               
+
         if len(self.flowers)>1: #u listi se nalazi više biljaka koje medusobno usporedujemo
             for cvijet in self.flowers[1:]: #iterira od drugog (indeks 1) elementa liste
                 if " " in cvijet.vrijednost(mem,unutar): #imamo latinski naziv
@@ -836,8 +836,8 @@ class Closest(AST):
                     if broj==-1:
                         raise GreškaIzvođenja('Ne postoji objekt ' + cvijet.vrijednost(mem,unutar) + ' u tablici')
                     genKodovi.append(vratiPodatak("GS",broj))
-                    
-                elif "[" in cvijet.vrijednost(mem,unutar): #imamo cvijetnu fomulu 
+
+                elif "[" in cvijet.vrijednost(mem,unutar): #imamo cvijetnu fomulu
                     broj=-1
                     broj=pronadiBroj("FF",cvijet.vrijednost(mem,unutar))
                     if broj==-1:
@@ -846,7 +846,7 @@ class Closest(AST):
 
                 else: #imamo genetski kod
                     genKodovi.append(cvijet.vrijednost(mem,unutar))
-                            
+
         elif len(self.flowers)==1: #u listi se nalazi samo jedna biljka koju usporedujemo sa svim biljkama baze
         #u listu genetski kodovi stavljamo genetske kodove svih biljaka iz baze s kojima usporedujem promatranu biljku
             for tablica,log in rt.imena:
@@ -856,8 +856,8 @@ class Closest(AST):
                         for thing in pristup.objekt.rows:
                             if(brojac!=broj):
                                 genKodovi.append(thing)
-                            brojac+=1 
-     
+                            brojac+=1
+
         l=len(min(genKodovi,key=len)) #duljina najkraceg genetskog koda
         maks=0 #max broj gena koji se podudaraju
         cvijet2=""
@@ -871,7 +871,8 @@ class Closest(AST):
                         br=pronadiBroj("GS",genKodovi[j])
                         cvijet2=vratiPodatak("LN",br)
 
-        return cvijet2 #vracamo biljku najblizu promatranoj
+        print(cvijet2) #vracamo biljku najblizu promatranoj
+                        #i print - kiki
 
 class Distance(AST):
     flowers: 'nesto_cvjetno*'
@@ -934,7 +935,7 @@ class Info(AST):
             if broj==-1:
                 raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
             ff=vratiPodatak("FF",broj)
-       
+
         p=ff.find("P")
         if(p == -1):
             if "CaCo" in ff: #U formuli se moze pisati CaCo umjesto P
@@ -943,14 +944,14 @@ class Info(AST):
                     vratiti = 0
                 else:
                     if not ff[t+2].isdigit():
-                        if ff[t+1] == ">": 
+                        if ff[t+1] == ">":
                             vratiti = math.inf
-                        else: 
-                            vratiti = ff[t+1]    
+                        else:
+                            vratiti = ff[t+1]
                     else:
-                        if not ff[t+1].isdigit(): 
+                        if not ff[t+1].isdigit():
                             vratiti = 1
-                        else: 
+                        else:
                             vratiti = ff[t+1]+ff[t+2]
             else:
                 t=ff.find("o") # moze pisati Co ili C, prvo provjeravamo pise li Co
@@ -960,34 +961,34 @@ class Info(AST):
                         vratiti = 0
                     else:
                         if not ff[l+2].isdigit():
-                            if ff[l+1] == ">": 
+                            if ff[l+1] == ">":
                                 vratiti = math.inf
-                            else: 
-                                vratiti = ff[l+1]  
+                            else:
+                                vratiti = ff[l+1]
                         else:
-                            if not ff[l+1].isdigit(): 
+                            if not ff[l+1].isdigit():
                                 vratiti = 1
-                            else: 
+                            else:
                                 vratiti = ff[l+1]+ff[l+2]
                 else:
                     if not ff[t+2].isdigit():
-                        if ff[t+1] == ">": 
+                        if ff[t+1] == ">":
                             vratiti = math.inf
-                        else: 
-                            vratiti = ff[l+1]  
+                        else:
+                            vratiti = ff[l+1]
                     else:
-                        if not ff[t+1].isdigit(): 
+                        if not ff[t+1].isdigit():
                             vratiti = 1
-                        else: 
+                        else:
                             vratiti = ff[l+1]+ff[l+2]
         else:
             if not ff[p+2].isdigit():
-                if ff[p+1] == ">": 
+                if ff[p+1] == ">":
                     vratiti = math.inf
                 else:
                     vratiti = ff[p+1]
             else:
-                if not ff[p+1].isdigit(): 
+                if not ff[p+1].isdigit():
                     vratiti = 1
                 else:
                     vratiti = ff[p+1]+ff[p+2]
@@ -1010,7 +1011,7 @@ class Info(AST):
             if broj==-1:
                 raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
             ff=vratiPodatak("FF",broj)
-        
+
         #provjera od kojih se dijelova sastoji biljka te njihov ispis
         p=ff.find("t")
         if(p == -1):
@@ -1085,11 +1086,11 @@ class Info(AST):
                 else:
                     if not ff[t+2].isdigit():
                         if ff[t+1] == ">": print("Biljka sadrži 12 ili više vanjskih latica.")
-                        else: print("Biljka sadrži ", ff[t+1], " vanjskih latica.")    
+                        else: print("Biljka sadrži ", ff[t+1], " vanjskih latica.")
                     else:
                         if not ff[t+1].isdigit(): print("Biljka sadrži jednu vanjsku laticu.")
-                        else: print("Biljka sadrži ", ff[t+1]+ff[t+2], " vanjskih latica.") 
-            
+                        else: print("Biljka sadrži ", ff[t+1]+ff[t+2], " vanjskih latica.")
+
             else:
                 t=ff.find("K")
                 if(t == -1):
@@ -1100,18 +1101,18 @@ class Info(AST):
                     else:
                         if not ff[l+2].isdigit():
                             if ff[l+1] == ">": print("Biljka sadrži 12 ili više čaški.")
-                            else: print("Biljka sadrži ", ff[l+1], " čaški.")    
+                            else: print("Biljka sadrži ", ff[l+1], " čaški.")
                         else:
                             if not ff[l+1].isdigit(): print("Biljka sadrži jednu čašku.")
-                            else: print("Biljka sadrži ", ff[l+1]+ff[l+2], " čaški.")    
+                            else: print("Biljka sadrži ", ff[l+1]+ff[l+2], " čaški.")
                 else:
                     if not ff[t+2].isdigit():
                         if ff[t+1] == ">": print("Biljka sadrži 12 ili više čaški.") #čaški ili čašci? nisam pismena -Dorotea
-                        else: print("Biljka sadrži ", ff[t+1], " čaški.")    
+                        else: print("Biljka sadrži ", ff[t+1], " čaški.")
                     else:
                         if not ff[t+1].isdigit(): print("Biljka sadrži jednu čašku.")
-                        else: print("Biljka sadrži ", ff[t+1]+ff[t+2], " čaški.") 
-                        
+                        else: print("Biljka sadrži ", ff[t+1]+ff[t+2], " čaški.")
+
                 t=ff.find("o") # moze pisati Co ili C, prvo provjeravamo pise li Co
                 if(t == -1):
                     l=ff.find("C")
@@ -1119,35 +1120,35 @@ class Info(AST):
                         print("Biljka ne sadrži latice.")
                     else:
                         if not ff[l+2].isdigit():
-                            if ff[l+1] == ">": 
+                            if ff[l+1] == ">":
                                 print("Biljka sadrži 12 ili više latica.")
                                 vratiti = math.inf
-                            else: 
-                                print("Biljka sadrži ", ff[l+1], " latica.")  
-                                vratiti = ff[l+1]  
+                            else:
+                                print("Biljka sadrži ", ff[l+1], " latica.")
+                                vratiti = ff[l+1]
                         else:
-                            if not ff[l+1].isdigit(): 
+                            if not ff[l+1].isdigit():
                                 print("Biljka sadrži jednu laticu.")
                                 vratiti = 1
-                            else: 
+                            else:
                                 print("Biljka sadrži ", ff[l+1]+ff[l+2], " laticu.")
                                 vratiti = ff[l+1]+ff[l+2]
                 else:
                     if not ff[t+2].isdigit():
-                        if ff[t+1] == ">": 
-                            print("Biljka sadrži 12 ili više latica.") 
+                        if ff[t+1] == ">":
+                            print("Biljka sadrži 12 ili više latica.")
                             vratiti = math.inf
-                        else: 
-                            print("Biljka sadrži ", ff[t+1], " latica.")  
-                            vratiti = ff[l+1]  
+                        else:
+                            print("Biljka sadrži ", ff[t+1], " latica.")
+                            vratiti = ff[l+1]
                     else:
-                        if not ff[t+1].isdigit(): 
+                        if not ff[t+1].isdigit():
                             print("Biljka sadrži jednu laticu.")
                             vratiti = 1
-                        else: 
-                            print("Biljka sadrži ", ff[t+1]+ff[t+2], " laticu.") 
+                        else:
+                            print("Biljka sadrži ", ff[t+1]+ff[t+2], " laticu.")
                             vratiti = ff[l+1]+ff[l+2]
-        
+
         else:
             if not ff[p+2].isdigit():
                 if ff[p+1] == ">": print("Biljka sadrži 12 ili više vanjskih latica.")
@@ -1438,8 +1439,8 @@ datw("dat.txt",$num3)
 }
 ''')
 """
-prikaz(proba, 5)
-izvrši(proba) #naredba izvrši je ta koja pokrece
+#prikaz(proba, 5)
+#izvrši(proba) #naredba izvrši je ta koja pokrece
 
 """ for tablica, log in rt.imena:
     print('Tablica', tablica, '- stupci:')
@@ -1449,7 +1450,6 @@ izvrši(proba) #naredba izvrši je ta koja pokrece
             print('\t', thing) """
 
 ###treba otkomentirati za unos kroz terminal
-"""
 ukupni = "program(){\n"
 trenutni = ""
 funkcije = ""
@@ -1467,7 +1467,7 @@ while 1:
             print("---main---")
             print(main)
             print("---cijeli program---")
-            cijeli = funkcije + ukupni + main + '\nret 0\n}'
+            cijeli = funkcije + ukupni + main + 'ret\n}'
             print(cijeli)
             par = P(cijeli)
             izvrši(par)
@@ -1493,4 +1493,3 @@ while 1:
         if ';' not in ulaz:
             main +=ulaz
     trenutni = ""
-        """
