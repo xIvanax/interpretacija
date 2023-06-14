@@ -913,7 +913,6 @@ class Distance(AST):
                             cvijet2=self.flowers[j]
 
         print(cvijet1.vrijednost(mem,unutar)+" "+cvijet2.vrijednost(mem,unutar)) #ispisujemo koje dvije biljke su genetski najblize
-        return maks #vracamo broj gena koji se podadaraju u genetskim sekvencama biljaka cvijet1 i cvijet2
 
 class Info(AST):
     flower: 'nesto_cvjetno'
@@ -992,7 +991,6 @@ class Info(AST):
                     vratiti = 1
                 else:
                     vratiti = ff[p+1]+ff[p+2]
-        return vratiti
 
     def izvrši(self, mem, unutar):
         ff=""
