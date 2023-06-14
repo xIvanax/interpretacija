@@ -1,5 +1,5 @@
 #komentar
-potnapot($x){
+$potnapot($x){
     $y = 1
     $x{
         $y = $x * $y
@@ -7,7 +7,7 @@ potnapot($x){
     ret $y
 #vraca x^x
 }
-fakt($x){
+$fakt($x){
     $y = 1
     $z = 1
     $x{
@@ -19,7 +19,7 @@ fakt($x){
 }
 program(){
     $a = 6
-    $a = potnapot($a)
+    $a = $potnapot($a)
     datw("dat11.txt", $a)
     #pise (a^a) u dat11.txt
     €cc = Rosa rubiginosa
@@ -34,7 +34,7 @@ program(){
     datw("dat14.txt", €ccc)
     #Cita i pise Rosa rubiginosa iz dat13.txt u dat14.txt
     $a = 5
-    $a = fakt($a)
+    $a = $fakt($a)
     datw("dat15.txt", $a)
     #pise faktorijel od a u dat15.txt
 }
