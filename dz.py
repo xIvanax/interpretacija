@@ -1,8 +1,8 @@
 '''
 Sto omogucavamo i kako:
     1) korisnik upisuje naredbu po naredbu (omoguceno pomocu while petlje na kraju koda;
-        obavezni su prelasci u novi red, a kraj unošenja naredbi označava se pomoću ';' što
-        zapocinje izvršavanje do sad unesenih naredbi)
+        obavezni su prelasci u novi red, a kraj unošenja naredbi označava se pomoću ';' (';' mora
+        doći u novom retku) što započinje izvršavanje do sad unesenih naredbi)
 
     2) varijable (cvjetnog tipa se oznacavaju kao €varijabla, a numeričkog kao $var)
 
@@ -10,9 +10,11 @@ Sto omogucavamo i kako:
     umjesto NUMVAR mozemo imati i obican broj
 
     4) definicije funkcija (npr. $plus($a, $b){ret $a+$b}); fja uvijek mora završiti s ret, ali on može biti
-    prazan (ne mora vratiti konkretnu vrijednost); kao argumente fja (odvojene zarezima) dozvoljavamo
-    samo brojeve, cvjetne formule, sekvence gena, latinske nazive, FLOWER_VAR, NUM_VAR; za povratne vr.
-    dozvoljavamo i aritmetičke izraze (numeričke) i izraz s operatorom CMP
+    prazan (ne mora vratiti konkretnu vrijednost) ili ako nije prazan mora biti usklađen s imenom fje (dakle,
+    ako ime funkcije počinje s $ i fja nema prazan return onda mora vratiti ili broj ili numeričku varijablu;
+    analogno s cvjetnim funkcijama); kao argumente fja (odvojene zarezima) dozvoljavamo
+    samo brojeve, cvjetne formule, sekvence gena, latinske nazive, FLOWER_VAR, NUM_VAR, aritmetičke (numeričke)
+    izraze i pozive fja (i cvjetnih i numeričkih); za povratne vr. dozvoljavamo i aritmetičke izraze (numeričke) i izraz s operatorom CMP
 
     5) funkcijski poziv (od definicije se razlikuje po tome sto nakon oble zagrade ne dode vitica);
     moze se pojaviti samostalno ili kao desna strana pridruživanja varijabli
@@ -273,7 +275,6 @@ def bilj(lex):
 # Mozemo biljku identificirati s bilo kojim od: cvjetna varijabla, lat naz, cvj form ili gen
 #   (svaki od njih jedinstveno odreduje biljku)
 
-
 ### Parser
 class P(Parser):
     def program(p) -> 'Memorija':
@@ -357,8 +358,6 @@ class P(Parser):
         elif p > T.VO: #u prethodnom smo slučaju riješili slučaj vitice za petlju pa je
             return p.blok() #jedino što preostaje blok
         elif p >= T.RET: #fja moze vraćati:
-            print("imeeee")
-            print(p.imef)
             if p > T.NUMVAR: #vrijednost numeričke varijable
                 return Vrati(p.tipa(p.imef))
             elif p > T.FLOWERVAR: #vrijednost cvjetne varijable
@@ -536,24 +535,31 @@ def izvrši(funkcije, *argv):
     funkcije['program'].pozovi(argv)
 
 ### AST
-# Funkcija: ime: IME parametri:[NUMVAR|FLOWERVAR|nesto_cvjetno] tijelo:naredba
-# naredba: Petlja: istinitost:JE|NIJE uvjet:log tijelo:naredba
+# Funkcija: ime: NUMVAR|FLOWERVAR parametri:[NUMVAR|FLOWERVAR] tijelo:naredba
+# naredba: Petlja: kolikoPuta:NUMVAR|BROJ tijelo:[naredba]
 #          Blok: naredbe:[naredba]
-#          Pridruživanje: ime:AIME|LIME pridruženo:izraz
-#          UpisiUDat: imeDat:dat ime:ime
-#          PridruziIzDat: ime:ime imeDat:dat
+#          Pridruživanje: ime:NUMVAR|FLOWERVAR pridruženo:izraz
+#          UpisiUDat: imeDat:DAT unos:BROJ|GENSEKV|LAT_NAZ|FLOWERF|FLOWERVAR|NUMVAR
+#          PridruziIzDatN: ime:NUMVAR imeDat:DAT
+#          PridruziIzDatF: ime:FLOWERVAR imeDat:DAT
 #          Insert: prvi:LAT_NAZ drugi:FLOWERF treci:GENSEKV
-#          Closest: flowers:[nesto_cvjetno]
-#          Distance: flowers:[nesto_cvjetno]
+#          Fetch: flower:FLOWERVAR|LAT_NAZ|GENSEKV|FLOWERF
+#          Closest: flowers:[LAT_NAZ|GENSEKV|FLOWERF|FLOWERVAR]
+#          Distance: flowers:[LAT_NAZ|GENSEKV|FLOWERF|FLOWERVAR]
+#          Info: flower:FLOWERVAR|LAT_NAZ|GENSEKV|FLOWERF
 #          Vrati: što:izraz
 # izraz: aritm: Zbroj: pribrojnici:[aritm]
 #               Suprotan: od:aritm
 #               Umnožak: faktori:[aritm]
-#        Poziv: funkcija:Funkcija? argumenti:[izraz]
+#               Poziv: funkcija:Funkcija? argumenti:[izraz]
+#        cvjetna_aritm: Poziv: funkcija:Funkcija? argumenti:[izraz]
+#                       Closest: flowers:[LAT_NAZ|GENSEKV|FLOWERF|FLOWERVAR]
+#                   Distance: flowers:[LAT_NAZ|GENSEKV|FLOWERF|FLOWERVAR]
 
-class UpisiUDat(AST): #omoguceno upisivanje bilo cega (broja, varijable, stringa...), svaki put kad opet pise u datoteku ono sto je prije pisalo u datoteci se prebrise, ne znam jel to zelimo ili ne
+class UpisiUDat(AST):
+    """Upisivanje u datoteku; svaki put se ono sto je prije pisalo u datoteci prebrise"""
     imeDat: 'DAT'
-    unos: 'IME'
+    unos: 'BROJ|GENSEKV|LAT_NAZ|FLOWERF|FLOWERVAR|NUMVAR'
     def izvrši(self, mem, unutar):
         cistoIme = self.imeDat.vrijednost(mem, unutar)
         novoIme = cistoIme[1:len(cistoIme) - 1] #uklonjeni navodnici iz imena kako bi se mogao izvrsiti open
@@ -586,8 +592,9 @@ def ffnumbers(p, s):
     else:
         return 0
 
-class PridruziIzDatN(AST): #pridruzivanje procitanog iz datoteke numerickoj varijabli
-    ime: 'IME'
+class PridruziIzDatN(AST):
+    """Pridruzivanje procitanog iz datoteke numerickoj varijabli"""
+    ime: 'NUMVAR'
     imeDat: 'DAT'
     def izvrši(self,mem,unutar):
         cistoIme = self.imeDat.vrijednost(mem, unutar)
@@ -605,8 +612,9 @@ class PridruziIzDatN(AST): #pridruzivanje procitanog iz datoteke numerickoj vari
 
         f.close()
 
-class PridruziIzDatF(AST): #pridruzivanje procitanog iz datoteke numerickoj varijabli
-    ime: 'IME'
+class PridruziIzDatF(AST):
+    """Pridruzivanje procitanog iz datoteke cvjetnoj varijabli"""
+    ime: 'FLOWERVAR'
     imeDat: 'DAT'
     def izvrši(self,mem,unutar):
         cistoIme = self.imeDat.vrijednost(mem, unutar)
@@ -625,7 +633,8 @@ class PridruziIzDatF(AST): #pridruzivanje procitanog iz datoteke numerickoj vari
                     raise Greška("Očekivano malo slovo drugoj riječi u latinskom nazivu biljke.")
                 else:
                     mem[self.ime]=procitaj
-
+            else:
+                raise Greška('Neispravno unesen latinski naziv biljke')
         elif procitaj[0] == "%": #potrebno provjerit je li genetska sekvenca ispravno unesena
             for i in procitaj[1:]:
                 if i not in {"A", "G", "C", "T"}:
@@ -693,25 +702,9 @@ class PridruziIzDatF(AST): #pridruzivanje procitanog iz datoteke numerickoj vari
                     i+=ffnumbers(i+1, procitaj)+1
 
             mem[self.ime]=procitaj
-
+        else:
+            raise Greška("Podatak u datoteci nije moguće zapisati u cvjetnu varijablu jer se tipovi ne podudaraju.")
         f.close()
-
-class Stupac(AST):
-    """Specifikacija stupca u tablici."""
-    ime: 'SQLIME'
-    tip: 'SQLIME'
-    rows: 'SQLIME*'
-    #veličina: 'BROJ?'
-
-class Create(AST):
-    """Naredba CREATE TABLE."""
-    tablica: 'SQLIME'
-    specifikacije: 'Stupac*'
-
-    def razriješi(naredba):
-        pristup = rt.imena[naredba.tablica] = Memorija(redefinicija=False)
-        for stupac in naredba.specifikacije:
-            pristup[stupac.ime] = PristupLog(stupac)
 
 #pomocna funkcija koja kao parametre prima ime stupca kojeg pretrazujemo, te podatak koji trazimo
 #vraca redni broj mjesta na kojemu se podatak nalazi u tom stupcu
@@ -743,7 +736,8 @@ def vratiPodatak(imeStupca, broj):
                     brojac+=1
     return vrati
 
-class Insert(AST): #unos podataka u bazu
+class Insert(AST):
+    """Unos podataka u bazu"""
     prvi: 'LAT_NAZ'
     drugi: 'FLOWERF'
     treci: 'GENSEKV'
@@ -751,7 +745,6 @@ class Insert(AST): #unos podataka u bazu
         #prvo provjeravamo nalazi li se podatak koji se pokusava unjeti u bazi
         provjera=-1
         provjera=pronadiBroj("LN",self.prvi.vrijednost(mem,unutar))
-
         #ako se podatak ne nalazi u bazi onda ga unosimo
         if(provjera==-1): #podatak se ne nalazi u tablici, stoga ga sada unosimo
             for tablica,log in rt.imena:
@@ -764,8 +757,9 @@ class Insert(AST): #unos podataka u bazu
                         pristup.objekt.rows.append(self.treci.vrijednost(mem,unutar))
         return
 
-class Fetch(AST): #na temelju zadane cvjetne varijable dohvaca sve podatke o toj biljci
-    flower: 'IME'
+class Fetch(AST):
+    """Na temelju zadanog cvjetnog podatka dohvaca sve podatke pripadne biljke iz tablice"""
+    flower: 'FLOWERVAR|LAT_NAZ|GENSEKV|FLOWERF'
     def izvrši(self,mem,unutar):
         ln=""
         ff=""
@@ -780,7 +774,6 @@ class Fetch(AST): #na temelju zadane cvjetne varijable dohvaca sve podatke o toj
                 raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
             ff=vratiPodatak("FF",broj)
             gs=vratiPodatak("GS",broj)
-
         elif "[" in self.flower.vrijednost(mem,unutar): #korisnik je unio cvijetnu fomulu
             ff=self.flower.vrijednost(mem,unutar)
             broj=-1
@@ -789,7 +782,6 @@ class Fetch(AST): #na temelju zadane cvjetne varijable dohvaca sve podatke o toj
                 raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
             ln=vratiPodatak("LN",broj)
             gs=vratiPodatak("GS",broj)
-
         else: #korisnik je unio genetski kod
             broj=-1
             gs=self.flower.vrijednost(mem,unutar)
@@ -799,16 +791,15 @@ class Fetch(AST): #na temelju zadane cvjetne varijable dohvaca sve podatke o toj
                 raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
             ln=vratiPodatak("LN",broj)
             ff=vratiPodatak("FF",broj)
-
         print(ln+" "+ff+" "+gs) #ispis dohvacenih podataka
         return
 
 class Closest(AST):
-    flowers: 'nesto_cvjetno*'
+    """Na temelju prvog cvjetnog podatka iz liste među ostalima pronalazi njemu genetski najbližeg"""
+    flowers: '(FLOWERVAR|GENSEKV|LAT_NAZ|FLOWERF)*'
     def izvrši(self,mem,unutar):
         genKodovi=[] #lista genetskih kodova koje usporedujemo
         broj=-1
-
         #prvo trazimo redni broj i genetski kod prve (mozda i jedine) biljke u listi
         #kako je moguce unjeti latinski naziv, cvjetnu formulu ili genetsku sekvencu provjeravamo sve mogucnosti
         if " " in self.flowers[0].vrijednost(mem,unutar): #imamo latinski naziv
@@ -816,7 +807,6 @@ class Closest(AST):
             if broj==-1:
                 raise GreškaIzvođenja('Ne postoji objekt ' + self.flowers[0].vrijednost(mem,unutar) + ' u tablici')
             genKodovi.append(vratiPodatak("GS",broj))
-
         elif "[" in self.flowers[0].vrijednost(mem,unutar): #imamo cvijetnu fomulu
             broj=-1
             broj=pronadiBroj("FF", self.flowers[0].vrijednost(mem,unutar))
@@ -826,7 +816,6 @@ class Closest(AST):
 
         else: #imamo genetski kod
             genKodovi.append(self.flowers[0].vrijednost(mem,unutar))
-
         if len(self.flowers)>1: #u listi se nalazi više biljaka koje medusobno usporedujemo
             for cvijet in self.flowers[1:]: #iterira od drugog (indeks 1) elementa liste
                 if " " in cvijet.vrijednost(mem,unutar): #imamo latinski naziv
@@ -846,7 +835,6 @@ class Closest(AST):
 
                 else: #imamo genetski kod
                     genKodovi.append(cvijet.vrijednost(mem,unutar))
-
         elif len(self.flowers)==1: #u listi se nalazi samo jedna biljka koju usporedujemo sa svim biljkama baze
         #u listu genetski kodovi stavljamo genetske kodove svih biljaka iz baze s kojima usporedujem promatranu biljku
             for tablica,log in rt.imena:
@@ -857,7 +845,6 @@ class Closest(AST):
                             if(brojac!=broj):
                                 genKodovi.append(thing)
                             brojac+=1
-
         l=len(min(genKodovi,key=len)) #duljina najkraceg genetskog koda
         maks=0 #max broj gena koji se podudaraju
         cvijet2=""
@@ -870,12 +857,12 @@ class Closest(AST):
                         maks=brojac
                         br=pronadiBroj("GS",genKodovi[j])
                         cvijet2=vratiPodatak("LN",br)
-
         print(cvijet2) #vracamo biljku najblizu promatranoj
                         #i print - kiki
-
+############################################odlucite se i popravite komentar
 class Distance(AST):
-    flowers: 'nesto_cvjetno*'
+    """U listi cvjetnih podataka pronalazi dvije genetski najbliže biljke"""
+    flowers: '(FLOWERVAR|GENSEKV|LAT_NAZ|FLOWERF)*'
     def izvrši(self,mem,unutar):
         genKodovi=[] #lista genetskih kodova koje usporedujemo
         for cvijet in self.flowers:
@@ -886,7 +873,6 @@ class Distance(AST):
                 if broj==-1:
                     raise GreškaIzvođenja('Ne postoji objekt ' + cvijet.vrijednost(mem,unutar) + ' u tablici')
                 genKodovi.append(vratiPodatak("GS",broj))
-
             elif "[" in cvijet.vrijednost(mem,unutar): #imamo cvijetnu fomulu
                 broj=-1
                 broj=pronadiBroj("FF", cvijet.vrijednost(mem,unutar))
@@ -896,7 +882,6 @@ class Distance(AST):
 
             else: #imamo genetski kod
                 genKodovi.append(cvijet.vrijednost(mem,unutar))
-
         l=len(min(genKodovi,key=len)) #duljina najkraceg genetskog koda
         maks=0 #max broj gena koji se podudaraju
         cvijet1=""
@@ -911,12 +896,12 @@ class Distance(AST):
                             maks=brojac
                             cvijet1=self.flowers[i]
                             cvijet2=self.flowers[j]
-
         print(cvijet1.vrijednost(mem,unutar)+" "+cvijet2.vrijednost(mem,unutar)) #ispisujemo koje dvije biljke su genetski najblize
 
 class Info(AST):
-    flower: 'nesto_cvjetno'
-    def vrijednost(self, mem, unutar):
+    """Na temelju danog cvjetnog podatka ispisuje informacije o odgovarajućoj biljci"""
+    flower: 'FLOWERVAR|LAT_NAZ|GENSEKV|FLOWERF'
+    def vrijednost(self, mem, unutar):#analogno kao metoda izvrši, ali za dobavljanje broja latica
         vratiti = 0 #povratna vr
         ff=""
         #trazimo genetski kod promatrane biljke
@@ -927,14 +912,12 @@ class Info(AST):
             if broj==-1:
                 raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
             ff=vratiPodatak("FF",broj)
-
         else: #imamo genetski kod
             broj=-1
             broj=pronadiBroj("GS", self.flower.vrijednost(mem,unutar))
             if broj==-1:
                 raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
             ff=vratiPodatak("FF",broj)
-
         p=ff.find("P")
         if(p == -1):
             if "CaCo" in ff: #U formuli se moze pisati CaCo umjesto P
@@ -1155,16 +1138,9 @@ class Info(AST):
                 if not ff[p+1].isdigit(): print("Biljka sadrži jednu vanjsku laticu.")
                 else: print("Biljka sadrži ", ff[p+1]+ff[p+2], " vanjskih latica.")
 
-
-class OneLine(AST): #cemu ovo sluzi?
-    ime: 'linija'
-    tijelo: 'naredba'
-    def izvrši(onelie, mem, unutar):
-        print("")
-
 class Funkcija(AST):
-    ime: 'IME'
-    parametri: 'VAR*'
+    ime: 'FLOWERVAR|NUMVAR|PROGRAM'
+    parametri: '(FLOWERVAR|NUMVAR)*'
     tijelo: 'naredba'
     def pozovi(funkcija, argumenti):
         lokalni = Memorija(zip(funkcija.parametri, argumenti))
@@ -1196,8 +1172,9 @@ class Poziv(AST):
         return r
 
 class Petlja(AST):
-    kolikoPuta: 'NUMVAR'
-    izvrsiti: 'naredba'
+    """Naredbe unutar izvrsiti izvrše se kolikoPuta puta"""
+    kolikoPuta: 'NUMVAR|BROJ'
+    izvrsiti: 'naredba*'
     def izvrši(petlja, mem, unutar):
         for i in range(petlja.kolikoPuta.vrijednost(mem, unutar)):
             for naredba in petlja.izvrsiti: naredba.izvrši(mem, unutar)
@@ -1208,7 +1185,7 @@ class Blok(AST):
         for naredba in blok.naredbe: naredba.izvrši(mem, unutar)
 
 class Pridruživanje(AST):
-    ime: 'IME'
+    ime: 'NUMVAR|FLOWERVAR'
     pridruženo: 'izraz'
     def izvrši(self, mem, unutar):
         mem[self.ime] = self.pridruženo.vrijednost(mem, unutar)
@@ -1239,6 +1216,23 @@ class Umnožak(AST):
 class Povratak(NelokalnaKontrolaToka): """Signal koji šalje naredba vrati."""
 
 #sql
+#pomoćne klase za sql
+class Stupac:
+    """Specifikacija stupca u tablici."""
+    def __init__(self, ime, tip, rows):
+        self.ime = ime
+        self.tip = tip
+        self.rows = rows
+class Create():
+    """Naredba za ubacivanje podataka u tablicu."""
+    def __init__(self, tablica, specifikacije):
+        self.tablica = tablica
+        self.specifikacije = specifikacije
+    def razriješi(naredba):
+        pristup = rt.imena[naredba.tablica] = Memorija(redefinicija=False)
+        for stupac in naredba.specifikacije:
+            pristup[stupac.ime] = PristupLog(stupac)
+
 rt.imena = Memorija(redefinicija=False)
 nazivi = ["Rosa rubiginosa"]
 nazivi.append("Rosa rugosa")
@@ -1418,6 +1412,7 @@ izvrši(proba) #naredba izvrši je ta koja pokrece
             print('\t', thing) """
 
 ###treba otkomentirati za unos kroz terminal
+"""
 ukupni = "program(){\n"
 trenutni = ""
 funkcije = ""
@@ -1461,3 +1456,4 @@ while 1:
         if ';' not in ulaz:
             main +=ulaz
     trenutni = ""
+"""
