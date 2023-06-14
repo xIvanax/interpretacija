@@ -1,5 +1,10 @@
 # Pliz provjerite jel mislite da su BKG i AST-ovi u skladu s onim sta pise
 # Ivana
+facts:
+    funk1(funk2) radi
+    funk1($a+1) radi
+    datw("ayy.txt", funk($a)) ne radi
+    u terminalu nakon unosa unijeti \n pa onda ;
 
 * pushala sam datoteku proba.txt u kojoj mozete vidjeti sto sam tocno probavala upisati u terminal
 * funkcionira isto kao pythonov shell, znaci ak se unosi funkcija ona se pamti, a ak se unosi bilo sta drugo smatra se dijelom glavnom programa
