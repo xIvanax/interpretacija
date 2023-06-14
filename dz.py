@@ -11,13 +11,15 @@ Sto omogucavamo i kako:
 
     4) definicije funkcija (npr. $plus($a, $b){ret $a+$b}); fja uvijek mora završiti s ret, ali on može biti
     prazan (ne mora vratiti konkretnu vrijednost) ili ako nije prazan mora biti usklađen s imenom fje (dakle,
-    ako ime funkcije počinje s $ i fja nema prazan return onda mora vratiti ili broj ili numeričku varijablu;
-    analogno s cvjetnim funkcijama); kao argumente fja (odvojene zarezima) dozvoljavamo
-    samo brojeve, cvjetne formule, sekvence gena, latinske nazive, FLOWER_VAR, NUM_VAR, aritmetičke (numeričke)
-    izraze i pozive fja (i cvjetnih i numeričkih); za povratne vr. dozvoljavamo i aritmetičke izraze (numeričke) i izraz s operatorom CMP
+    ako ime funkcije počinje s $ i fja nema prazan return onda mora vratiti ili broj ili numeričku varijablu ili
+    numerički aritmetički izraz; analogno s cvjetnim funkcijama);  
+    za povratne vr. dozvoljavamo i aritmetičke izraze (numeričke) i izraz s operatorom CMP
 
     5) funkcijski poziv (od definicije se razlikuje po tome sto nakon oble zagrade ne dode vitica);
-    moze se pojaviti samostalno ili kao desna strana pridruživanja varijabli
+    moze se pojaviti samostalno ili kao desna strana pridruživanja varijabli; kao argumente fja 
+    (odvojene zarezima) dozvoljavamo brojeve, cvjetne formule, sekvence gena, latinske nazive, 
+    FLOWER_VAR, NUM_VAR, aritmetičke (numeričke) izraze, aritmetički cvjetni operator cmp i 
+    pozive fja (i cvjetnih i numeričkih);
 
     6) operator ~ (alias info) koristi se za dobivanje raznih informacija o biljci određenih
         njenom cvjetnom formulom t.d. se stavi npr. info €cvijet; umjesto cvjetne varijable može doći
@@ -26,7 +28,8 @@ Sto omogucavamo i kako:
 
     7) print u datoteku pomocu kljucne rijeci 'datw'; npr. datw("ime.txt", nesto) gdje nesto moze biti
     cvjetna varijabla, numericka varijabla, broj, cvjetna formula, sekvenca gena ili latinski naziv ili
-    rezultat numeričke aritmetičke operacije ili poziva fje (bilo kojeg tipa)
+    rezultat numeričke aritmetičke operacije ili rezultat aritmetičkog cvjetnog operatora CMP 
+    ili poziva fje (bilo kojeg tipa)
 
     8) citanje iz datoteke pomocu kljucne rijeci 'datread'; npr $x = datread("ime.txt")
 
@@ -55,6 +58,7 @@ Sto omogucavamo i kako:
             genetskim kodovima biljaka koji se nalaze u tablici podataka
             -unos: Citrus limon ß Acer palmatum ß, usporedit ce genetske kodove Citrus limona i Acera palmatuma,
             nece pretrazivati bazu
+            -povratna vrijednost: cvjetni tip koji reprezentira genetski najbliži cvijet
 
     10) sql naredba za unos cvijeta u tablicu pomocu operator '->' (alias: unesi)
             -primjer: ->Rosa rubiginosa->[K5C5AG10]->ATGCTGACGTACGTTA
@@ -273,8 +277,9 @@ def bilj(lex):
 # argument -> aritm |! cvjetna_aritm  [!KONTEKST]
 # gen_dist -> cvjetni_clan |  gen_dist ED cvjetni_clan
 # closest -> cvjetni_clan |  closest CMP cvjetni_clan
-# cvjetna_aritm -> cvjetni_clan gen_dist | cvjetni_clan closest | cvjetni_clan
-# cvjetni_clan -> FLOWERF | GENSEKV | LAT_NAZ | FLOWERVAR | FLOWERVAR poziv
+# cvjetna_aritm -> cvjetni_clan gen_dist | cvjetni_clan
+# cvjetni_clan -> cvjetni_clan closest | cvjetni_faktor
+# cvjetni_faktor -> FLOWERF | GENSEKV | LAT_NAZ | FLOWERVAR | FLOWERVAR poziv
 # aritm -> član | aritm PLUS član | aritm MINUS član
 # član -> faktor | član ZVJEZDICA faktor
 # faktor -> BROJ | NUMVAR | NUMVAR poziv | OO aritm OZ | MINUS faktor
@@ -424,6 +429,7 @@ class P(Parser):
         return Distance(flowers)
 
     def closest(p, first) -> 'Closest': #operator CMP
+        print(first)
         flowers = [first]
         while p >= T.CMP:
             if p > T.FLOWERVAR:
@@ -463,7 +469,7 @@ class P(Parser):
         p >= T.NR
         return Blok.ili_samo(n)
 
-    def argumenti(p, parametri) -> 'tipa*': #argumenti
+    def argumenti(p, parametri) -> 'tipa*': #argumenti fja
         arg = []
         p >> T.OO
         for i, parametar in enumerate(parametri):
@@ -474,21 +480,21 @@ class P(Parser):
         p >> T.OZ
         return arg
 
-    def cvjetna_aritm(p) -> 'closest|gen_dist|cvjetni_član': #aritmetičke operacije za cvijeće (nema prioriteta), ali se ne mogu miješati
+    def cvjetna_aritm(p) -> 'gen_dist|cvjetni_član': #aritmetičke operacije za cvijeće (nema prioriteta), ali se ne mogu miješati
         cilj = p.cvjetni_član()
         if p > T.ED:
             return(p.gen_dist(cilj))
         else:
             return cilj
 
-    def cvjetni_član(p):
+    def cvjetni_član(p) -> 'cvjetni_faktor|closest':
         cilj1 = p.cvjetni_faktor()
         if p > T.CMP:
             return(p.closest(cilj1))
         else:
             return cilj1
 
-    def cvjetni_faktor(p): #članovi aritmetičkih operacija za cvijeće mogu biti
+    def cvjetni_faktor(p) -> 'Poziv|FLOWERVAR|FLOWERF|GENSEKV|LAT_NAZ': #članovi aritmetičkih operacija za cvijeće mogu biti
         if call := p >= T.FLOWERVAR: #ili rezultat poziva cvjetne funkcije
             if call in p.funkcije:
                 funkcija = p.funkcije[call]
@@ -1161,7 +1167,7 @@ class Create():
         pristup = rt.imena[naredba.tablica] = Memorija(redefinicija=False)
         for stupac in naredba.specifikacije:
             pristup[stupac.ime] = PristupLog(stupac)
-
+#popunjavanje tablice
 rt.imena = Memorija(redefinicija=False)
 nazivi = ["Rosa rubiginosa"]
 nazivi.append("Rosa rugosa")
@@ -1193,88 +1199,91 @@ geni.append("%ACGTTTTCGTATTCGTTA")
 geni.append("%ACGTTTTCGTATTC")
 stupci.append(Stupac("GS", "GENSEKV", geni))
 Create("Botanika", stupci).razriješi()
-
+#ispis tablice
 """ for tablica, log in rt.imena: #ispis sql tablice
     print('Tablica', tablica, '- stupci:')
     for stupac, pristup in log:
         print('\t', stupac, pristup)
         for thing in pristup.objekt.rows: ##prolazak po rows
             print('\t', thing) """
-
-#isprobavanje parsera:
-#isprobano (lesker/parser)
+#prvi program
 """
 proba = P('''
-€cvjetnaFja(€a){
-    ret €a
+#komentar
+$potnapot($x){
+    $y = 1
+    $x{
+        $y = $x * $y
+    }
+    ret $y
+#vraca x^x
 }
-$numerickaFja($x){
-    ret $x
-}
-$void($a){
-    datw("dat.txt", $a)
-    ret
+$fakt($x){
+    $y = 1
+    $z = 1
+    $x{
+        $z = $z * $y
+        $y = $y + 1
+    }
+    ret $z
+#vraca x!
 }
 program(){
-$broj = 22
-datw("data.txt", $broj + $broj)
-€cvijet = Rosa rubiginosa
-€cvijet1 = €cvijet ß Rosa rubiginosa ß Rosa rugosa
-datw("data5.txt", €cvijet ß Rosa rubiginosa ß Rosa rugosa)
-datw("data6.txt", €cvijet1)
-datw("data4.txt", €cvijet1)
-€cvijet = Rosa rubiginosa
-$broj = $numerickaFja(222)
-€cvijet = €cvjetnaFja(Rosa rubiginosa)
-datw("cv.txt", €cvijet)
-datw("dat.txt", $broj)
-$void(355)
+    $a = 6
+    $a = $potnapot($a)
+    datw("dat11.txt", $a)
+    #pise (a^a) u dat11.txt
+    €cc = Rosa rubiginosa
+    ~ €cc
+    #ovo ce ispisati podatke o cvijetu, tamo cemo vidjeti da ima 5 latica
+    $a = 5
+    datw("dat12.txt", $a)
+    #pise koliko latica ima cc u dat12.txt
+    datw("dat13.txt", €cc)
+    #pise Rosa rubiginosa u dat13.txt
+    €ccc = datread("dat13.txt")
+    datw("dat14.txt", €ccc)
+    #Cita i pise Rosa rubiginosa iz dat13.txt u dat14.txt
+    $a = 5
+    $a = $fakt($a)
+    datw("dat15.txt", $a)
+    #pise faktorijel od a u dat15.txt
 }
 ''')
 """
-"""isprobano (lekser/parser)
-proba = P('''#komentar
-program(){
-->Rosa rubiginosa->[Bt1K5C5A1G>]->%ATGCTGACGTACGTTA
-€cvijet = Rosa rubiginosa
-datw("dat.txt",€cvijet)
-$num1 = info €cvijet
-datw("dat3.txt", $num1)
-€cvijet ? Rosa rubiginosa ? Rosa rugosa
-$num2 = ~ €cvijet
-$num3 = 1
-3{$num3 = $num3 + 1}
-datw("dat.txt",$num3)
-€geni = %ATGCTGACGTACGTTA
-€formula = [Bt1K5C5A1G>]
-}
-''')
+#drugi program
 """
-"""isprobano (lekser/parser)
 proba = P('''
-€cvjetnaFja(€a){
-    ret %ATGCTGACGTACGTTA
-}
-$numerickaFja($x){
-    ret 2345432
-}
+#komentar
 program(){
-$broj = 22
-$drugiBroj = $numerickaFja($broj)
-datw("dat1.txt", $drugiBroj)
-->Rosa rubiginosa->[Bt1K5C5A1G>]->%ATGCTGACGTACGTTA
-€cvijet = Rosa rubiginosa
-€drugiCvijet = €cvjetnaFja(€cvijet)
-datw("dat2.txt", €drugiCvijet)
+->Lilium candidum->[P3A3G3]->%ACGTCACGCACATTAC
+#Lilium candidum, [P3A3G3], %ACGTCACGCACATTAC unesen u bazu
+<-Lilium candidum
+<-Rosa rubiginosa
+<-Rosa rugosa
+<-Olea europaea
+#ispiše podatke iz baze za biljke
+€c1 = Lilium candidum
+€c1 ? Rosa rubiginosa ? Rosa rugosa
+#ispiše dva cvijeta iz niza s najsličnijim genima
+datw("dat21.txt", €c1)
+€c2 = datread("dat21.txt")
+#procita iz dat21.txt i pospremi u c2
+€c2 ? Rosa rubiginosa ? Rosa rugosa
+#isti ispis kao prije
+€c2 ? Rosa rubiginosa ? Olea europaea
+<-%ACGTCACGCACATTAC
 }
 ''')
 """
+#treci program
 """
-proba = P('''#komentar
+proba = P('''
+#komentar
 €compnw(€c){
-    €c cmp
+    €c = €c cmp
     datw("dat31.txt", €c)
-    ret
+    ret €c
 }
 #zapise c u dat31.txt i ispise najslicniji njemu
 program(){
@@ -1282,72 +1291,43 @@ program(){
 €c1 = Rosa rubiginosa
 €compnw(€c1)
 #sad vidimo koja je najslicnija Rosi rubiginos
+€c2 = Rosa rugosa
+€novi = Lilium candidum
+<-Olea europaea
+<-€novi
+€c4 = Olea europaea
+€c1 ? €c2 ? €novi ? €c4
+€novi = €novi cmp
+#ispise najslicniji cvijet novom cvijetu iz baze
+<-Mammillaria mystax
+€najslicniji = Mammillaria mystax
+datw("dat32.txt", €najslicniji)
 }
-''')
-"""
-"""isprobano (lekser/parser)
-proba = P('''#komentar
-$zb($a){
-    datw("dat.txt",$a)
-    ret $a + 1
-}
-€cmp(€cmp){
-    datw("dat2.txt", €cmp)
-    ret
-}
-program(){
-$a = 502
-$b=$zb($a)
-datw("dat1.txt",$b)
-€cvijet = Rosa rugosaasaaasfasfasfasasa
-€cmp(€cvijet)
-€novicvijet = datread("dat2.txt")
-datw("dat1.txt", €novicvijet)
-}
-''')
-"""
-"""isprobano (parser)
-proba = P('''#komentar
-$zb($a,$b){
-    datw("dat.txt",$a)
-    datw("dat2.txt",$b)
-    $c = $a + $b
-    ret $c
-}
-program(){
-$a = 1
-$b = 25
-$rezz = $zb($a,$b)
-datw("dat1.txt", $rezz)
-}
-''')
-"""
-"""isprobano (parser)
-proba = P('''#komentar
-program(){
-->Rosa rubiginosa->[Bt1K5C5A1G>]->%ATGCTGACGTACGTTA
-€cvijet = Rosa rubiginosa
-datw("dat.txt",€cvijet)
-info €cvijet
-€cvijet ? Rosa rubiginosa ? Rosa rugosa
-~ €cvijet
-$num3 = 1
-3{$num3 = $num3 + 1}
-datw("dat.txt",$num3)
-€geni = %ATGCTGACGTACGTTA
-€formula = [Bt1K5C5A1G>]
-}
-''')
-"""
-prikaz(proba, 5)
-izvrši(proba) #naredba izvrši je ta koja pokrece
 
-""" for tablica, log in rt.imena:
-    print('Tablica', tablica, '- stupci:')
-    for stupac, pristup in log:
-        print('\t', stupac, pristup)
-        for thing in pristup.objekt.rows: ##prolazak po rows
-            print('\t', thing) """
+''')
+"""
+#cetvrti program
+"""
+proba = P('''
+->Laurus nobilis->[BtP4A1G>]->%TAGAGAATCCCGCTGTAATACCGTGA
+€cvijet = Laurus nobilis
+€najblizi = €cvijet ß 
+datw("dat.txt", €najblizi)
+#vraca koja biljka je najbliza promatranoj iz baze podataka
+~ €najblizi
+#ispisuje podatke o toj biljci koje procita iz cvjetne formule
+dohvati €najblizi
+#ispisuje sve podatke iz baze koji su pohranjeni o toj biljci
+datw("dat1.txt",€cvijet ß Rosa rubiginosa ß Citrus limon)
+#u datoteku zapisujemo koja je od biljaka, Rosa rubiginosa ili Citrus limon, bliza promatranoj biljci
+€procitaj = datread("dat1.txt")
+~ €procitaj
+''')
+"""
+#otkomentirati sljedeca dva retka za testiranje programa
+#prikaz(proba, 5)
+#izvrši(proba)
+
 
 ###treba otkomentirati za unos kroz terminal
 """
@@ -1363,13 +1343,14 @@ while 1:
     flag = 1
     for i in range(0, len(ulaz)):
         if ulaz[i] == ";":#kraj programa
-            print("---funkcije---")
-            print(funkcije)
-            print("---main---")
-            print(main)
-            print("---cijeli program---")
+            #opcionalni printovi za pregled programa
+            #print("---funkcije---")
+            #print(funkcije)
+            #print("---main---")
+            #print(main)
+            #print("---cijeli program---")
             cijeli = funkcije + ukupni + main + 'ret\n}'
-            print(cijeli)
+            #print(cijeli)
             par = P(cijeli)
             izvrši(par)
             trenutni = ""
