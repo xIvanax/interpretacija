@@ -66,6 +66,8 @@ Sto omogucavamo i kako:
 
     napomena: pojedine naredbe u jeziku moraju biti odvojene s \n
     napomena: korisnik ne moze definirati funkciju s imenom 'program' jer je to rezervirano za main
+    napomena: Mozemo biljku identificirati s bilo kojim od: cvjetna varijabla, latinski naziv, cvjetna formula 
+    ili sekvencama gena (svaki od njih jedinstveno odreduje biljku)
 '''
 import os
 from vepar import *
@@ -248,35 +250,34 @@ def bilj(lex):
                 yield lex.token(T.SQLFETCH)
             else:
                 yield lex.literal(T)
-#bilj("""[K5C5AG10]""")
-################################################################################################treba provjeriti uskladenost BKG i parsera
-#####i treba provejriti jesmo li sve stavili unutra što treba
-### BKG
+
+### BKG (ne sasvim - zbog minimalnog konteksta)
 # program -> funkcija | funkcija program
-# funkcija -> IME OO parametri? OZ VO naredba VZ
-# parametri -> ime | parametri ZAREZ ime | nesto_cvjetno | parametri ZAREZ nesto_cvjetno
+# funkcija -> (FLOWERVAR|NUMVAR) OO parametri? OZ VO naredbe VZ
+# parametri -> ime | parametri ZAREZ ime
 # ime -> NUMVAR | FLOWERVAR
-# naredba -> pridruži | VO naredbe VZ | RET argument
-#         | gen_dist | closest | petlja
-#         | sql | DATW OO DAT ZAREZ TEKST OZ | pridruziIzDat
+# naredba -> DATW OO DAT ZAREZ (BROJ|GENSEKV|LAT_NAZ|FLOWERF|FLOWERVAR|NUMVAR) |
+#           NUMVAR numerickaNaredba | FLOWERVAR cvjetnaNaredba | INFO cvjetni_clan
+#           blok | RET povratna | SQLINSERT LAT_NAZ SQLINSERT FLOWERF SQLINSERT GENSEKV |
+#           SQLFETCH cvjetni_član
 # naredbe -> naredba | naredbe NR naredba
-# pridruži -> NUMVAR JEDNAKO aritm | FLOWERVAR JEDNAKO nesto_cvjetno
-# pridružiIzDat ->  NUMVAR JEDNAKO DATREAD OO DAT OZ | NUMVAR JEDNAKO DATREAD OO DAT OZ
-# nesto_cvjetno -> FLOWERF | GENSEKV | LAT_NAZ
-# gen_dist -> cvjetni_clan |  gen_dist ED cvjetni_clan
-# closest -> cvjetni_clan |  closest CMP cvjetni_clan
-# petlja -> NUMVAR VO naredba VZ | BROJ VO naredba VZ
-# sql -> SQLINSERT LAT_NAZ SQLINSERT FLOWERF SQLINSERT GENSEKV
-# cvjetni_clan -> GENSEKV | LAT_NAZ | FLOWERVAR | FLOWERF
-# aritm -> član | aritm PLUS član | aritm MINUS član
-# član -> faktor | član ZVJEZDICA faktor
-# faktor -> BROJ | NUMVAR | IME poziv | OO aritm OZ | MINUS faktor | PET FLOWERVAR | PET nesto_cvjetno
+# numerickaNaredba -> pridružiIzDat  | pridružiN | petlja | poziv
+# cvjetnaNaredba -> pridružiIzDat | pridruziF | gen_dist | closest | poziv
+# pridružiIzDat ->  JEDNAKO DATREAD OO DAT OZ 
+# pridružiN -> JEDNAKO aritm
+# pridružiF -> JEDNAKO cvjetna_aritm
+# petlja -> NUMVAR VO naredbe VZ | BROJ VO naredbe VZ
 # poziv -> OO OZ | OO argumenti OZ
 # argumenti -> argument | argumenti ZAREZ argument
-# argument -> nesto_cvjetno | BROJ
-#
-# Mozemo biljku identificirati s bilo kojim od: cvjetna varijabla, lat naz, cvj form ili gen
-#   (svaki od njih jedinstveno odreduje biljku)
+# argument -> aritm |! cvjetna_aritm  [!KONTEKST]
+# gen_dist -> cvjetni_clan |  gen_dist ED cvjetni_clan
+# closest -> cvjetni_clan |  closest CMP cvjetni_clan
+# cvjetna_aritm -> cvjetni_clan gen_dist | cvjetni_clan closest | cvjetni_clan
+# cvjetni_clan -> FLOWERF | GENSEKV | LAT_NAZ | FLOWERVAR | FLOWERVAR poziv
+# aritm -> član | aritm PLUS član | aritm MINUS član
+# član -> faktor | član ZVJEZDICA faktor
+# faktor -> BROJ | NUMVAR | NUMVAR poziv | OO aritm OZ | MINUS faktor
+# povratna -> aritm |! cvjetna_aritm |! (FLOWERF|GENSEKV|LAT_NAZ) |! BROJ [!KONTEKST]
 
 ### Parser
 class P(Parser):
@@ -305,19 +306,6 @@ class P(Parser):
     def ime(p) -> 'NUMVAR|FLOWERVAR':
         p >= T.NR
         return p >> {T.NUMVAR, T.FLOWERVAR}
-
-    def nesto_cvjetno(p) -> 'FLOWERF|GENSEKV|LAT_NAZ|FLOWERVAR':###########
-        p >= T.NR
-        if call := p >= T.FLOWERVAR: #poziv cvjetne funkcije
-            if call in p.funkcije:
-                funkcija = p.funkcije[call]
-                return Poziv(funkcija, p.argumenti(funkcija.parametri))
-            elif call == p.imef:
-                return Poziv(nenavedeno, p.argumenti(p.parametrif))
-            else:
-                return call
-        else:
-            return p >> {T.FLOWERF, T.GENSEKV, T.LAT_NAZ}
 
     def parametri(p) -> 'ime*':
         p >> T.OO
@@ -385,7 +373,7 @@ class P(Parser):
             treci = p >> T.GENSEKV
             return Insert(prvi, drugi, treci)
         elif p >= T.SQLFETCH: #pri dohvatu dovoljno navesti jedan od 3 identifikatora
-            return Fetch(p.nesto_cvjetno())
+            return Fetch(p.cvjetni_član())
         elif p > T.FLOWERVAR:
             ime = p.ime()
             if p >= T.JEDN: #cvjetnoj varijabli se može pridružiti:
@@ -411,7 +399,7 @@ class P(Parser):
         elif p > T.BROJ: #jedini preostali slučaj kad možemo naići na broj je ako on prethodi petlji
             return p.petlja(p >> T.BROJ) #ostale smo slučajeve riješili kod NUMVAR
         elif p >= T.INFO:
-            return Info(p.nesto_cvjetno())
+            return Info(p.cvjetni_član())
         else:
             cvijet = p >> {T.LAT_NAZ, T.GENSEKV, T.FLOWERF}
             if p > T.ED:
@@ -425,7 +413,7 @@ class P(Parser):
             if p > T.FLOWERVAR:
                 flowers.append(p.ime())
             else:
-                flowers.append(p.nesto_cvjetno())
+                flowers.append(p.cvjetni_član())
         return Distance(flowers)
 
     def closest(p, first): #operator CMP
@@ -434,7 +422,7 @@ class P(Parser):
             if p > T.FLOWERVAR:
                 flowers.append(p.ime())
             elif p > {T.FLOWERF, T.GENSEKV, T.LAT_NAZ}:
-                flowers.append(p.nesto_cvjetno())
+                flowers.append(p.cvjetni_član())
             else: #ako je T.CMP zadnji onda se u listi nalazi samo pocetna biljka koju cemo usporedivati s bazom podataka
                 return Closest(flowers)
         return Closest(flowers)
