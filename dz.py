@@ -83,7 +83,10 @@ def ffControl(lex):
                 raise LeksičkaGreška("Neispravno formulirana cvjetna formula. Proučite sljedeće upute za ispravnu formulaciju:\n"+string)
             else:
                 lex >= {'0', '1', '2'}
-        else: lex >> {'2', '3', '4', '5', '6', '7', '8', '9'}
+        elif lex > {'2', '3', '4', '5', '6', '7', '8', '9'}:
+            lex >> {'2', '3', '4', '5', '6', '7', '8', '9'}
+        else:
+            return
     else:
         lex >> '>'
 
@@ -245,7 +248,7 @@ def bilj(lex):
                 yield lex.token(T.SQLFETCH)
             else:
                 yield lex.literal(T)
-
+#bilj("""[K5C5AG10]""")
 ################################################################################################treba provjeriti uskladenost BKG i parsera
 #####i treba provejriti jesmo li sve stavili unutra što treba
 ### BKG
@@ -901,80 +904,6 @@ class Distance(AST):
 class Info(AST):
     """Na temelju danog cvjetnog podatka ispisuje informacije o odgovarajućoj biljci"""
     flower: 'FLOWERVAR|LAT_NAZ|GENSEKV|FLOWERF'
-    def vrijednost(self, mem, unutar):#analogno kao metoda izvrši, ali za dobavljanje broja latica
-        vratiti = 0 #povratna vr
-        ff=""
-        #trazimo genetski kod promatrane biljke
-        #kako je moguce unjeti latinski naziv, cvjetnu formulu ili genetsku sekvencu provjeravamo sve mogucnosti
-        if " " in self.flower.vrijednost(mem,unutar): #imamo latinski naziv
-            broj=-1
-            broj=pronadiBroj("LN", self.flower.vrijednost(mem,unutar))
-            if broj==-1:
-                raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
-            ff=vratiPodatak("FF",broj)
-        else: #imamo genetski kod
-            broj=-1
-            broj=pronadiBroj("GS", self.flower.vrijednost(mem,unutar))
-            if broj==-1:
-                raise GreškaIzvođenja('Ne postoji objekt ' + self.flower.vrijednost(mem,unutar) + ' u tablici')
-            ff=vratiPodatak("FF",broj)
-        p=ff.find("P")
-        if(p == -1):
-            if "CaCo" in ff: #U formuli se moze pisati CaCo umjesto P
-                t=ff.find("o")
-                if(t == -1):
-                    vratiti = 0
-                else:
-                    if not ff[t+2].isdigit():
-                        if ff[t+1] == ">":
-                            vratiti = math.inf
-                        else:
-                            vratiti = ff[t+1]
-                    else:
-                        if not ff[t+1].isdigit():
-                            vratiti = 1
-                        else:
-                            vratiti = ff[t+1]+ff[t+2]
-            else:
-                t=ff.find("o") # moze pisati Co ili C, prvo provjeravamo pise li Co
-                if(t == -1):
-                    l=ff.find("C")
-                    if(l == -1):
-                        vratiti = 0
-                    else:
-                        if not ff[l+2].isdigit():
-                            if ff[l+1] == ">":
-                                vratiti = math.inf
-                            else:
-                                vratiti = ff[l+1]
-                        else:
-                            if not ff[l+1].isdigit():
-                                vratiti = 1
-                            else:
-                                vratiti = ff[l+1]+ff[l+2]
-                else:
-                    if not ff[t+2].isdigit():
-                        if ff[t+1] == ">":
-                            vratiti = math.inf
-                        else:
-                            vratiti = ff[l+1]
-                    else:
-                        if not ff[t+1].isdigit():
-                            vratiti = 1
-                        else:
-                            vratiti = ff[l+1]+ff[l+2]
-        else:
-            if not ff[p+2].isdigit():
-                if ff[p+1] == ">":
-                    vratiti = math.inf
-                else:
-                    vratiti = ff[p+1]
-            else:
-                if not ff[p+1].isdigit():
-                    vratiti = 1
-                else:
-                    vratiti = ff[p+1]+ff[p+2]
-
     def izvrši(self, mem, unutar):
         ff=""
         #trazimo genetski kod promatrane biljke
@@ -1244,7 +1173,7 @@ nazivi.append("Citrus limon")
 nazivi.append("Acer palmatum")
 stupci = [Stupac("LN", "LAT_NAZ", nazivi)]
 
-formule = ["[K5C5A1G10]"]
+formule = ["[K5C5AG10]"]
 formule.append("[K5C2A1G9]")
 formule.append("[K4C4A2G2]")
 formule.append("[OP3A3G3]")
@@ -1333,6 +1262,7 @@ datw("dat2.txt", €drugiCvijet)
 }
 ''')
 """
+"""
 proba = P('''#komentar
 €compnw(€c){
     €c cmp
@@ -1347,6 +1277,7 @@ program(){
 #sad vidimo koja je najslicnija Rosi rubiginos
 }
 ''')
+"""
 """isprobano (lekser/parser)
 proba = P('''#komentar
 $zb($a){
