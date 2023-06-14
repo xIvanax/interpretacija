@@ -1,4 +1,24 @@
-# Pliz provjerite jel mislite da su BKG i AST-ovi u skladu s onim sta pise
+# pregled rada
+Zapravo smo svi radili barem dio leksera, parsera, semantike itd. jer kako je pojedini član radio neki svoj dio i testirao tako je znao uočiti neku grešku u tuđem dijelu pa bi ju išao popraviti, ali pokušat ćemo bar okvirno podijeliti zasluge.
+Dorotea Žilec
+-	veći dio semantike
+-	dio parsera
+-	testiranje (quality control)
+-	napisala 4. program
+Ivana Sablić
+-	veći dio parsera 
+-	BKG
+-	dio unosa u terminal
+-	dio leksera (kontrola formata sekvenci gena i cvjetne formule)
+-	dio semantike
+-	testiranje (quality control)
+Christian Sandri
+-	veći dio leksera
+-	dio parsera
+-	dio unosa u terminal
+-	napisao prva 3 programa
+-	testiranje (quality control) 
+
 
 # facts:
     funk1(funk2) radi
