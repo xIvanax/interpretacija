@@ -1,8 +1,8 @@
 #komentar
 €compnw(€c){
-    €c cmp
+    €c = €c cmp
     datw("dat31.txt", €c)
-    ret
+    ret €c
 }
 #zapise c u dat31.txt i ispise najslicniji njemu
 program(){
@@ -16,7 +16,7 @@ program(){
 <-€novi
 €c4 = Olea europaea
 €c1 ? €c2 ? €novi ? €c4
-€novi cmp
+€novi = €novi cmp
 #ispise najslicniji cvijet novom cvijetu iz baze
 <-Mammillaria mystax
 €najslicniji = Mammillaria mystax
