@@ -317,7 +317,7 @@ class P(Parser):
         p >> T.OZ
         return param
 
-    def naredba(p) -> 'petlja|blok|Vrati|Pridruživanje|UpisiUDat|PridruziIzDat':
+    def naredba(p) -> 'petlja|blok|Vrati|Pridruživanje|UpisiUDat|PridruziIzDatF|PridruziIzDatN|Poziv|Insert|Fetch|gen_dist|closest|Info':
         p >= T.NR
         if p >= T.DATW:#upisivanje u datoteku ovisno o tipu narednog izraza
             p >> T.OO
@@ -414,7 +414,7 @@ class P(Parser):
             else:
                 return p.closest(cvijet)
 
-    def gen_dist(p, first): #operator ED
+    def gen_dist(p, first) -> 'Distance': #operator ED
         flowers = [first]
         while p >= T.ED:
             if p > T.FLOWERVAR:
@@ -423,7 +423,7 @@ class P(Parser):
                 flowers.append(p.cvjetni_član())
         return Distance(flowers)
 
-    def closest(p, first): #operator CMP
+    def closest(p, first) -> 'Closest': #operator CMP
         flowers = [first]
         while p >= T.CMP:
             if p > T.FLOWERVAR:
@@ -434,7 +434,7 @@ class P(Parser):
                 return Closest(flowers)
         return Closest(flowers)
 
-    def tipa(p, ime) -> 'NUMVAR|FLOWERVAR': #određuje tip s kojim dalje radimo (numerički ili cvjetni)
+    def tipa(p, ime) -> 'aritm|cvjetna_aritm': #određuje tip s kojim dalje radimo (numerički ili cvjetni)
         p >= T.NR
         if ime ^ T.NUMVAR: return p.aritm()
         elif ime ^ T.FLOWERVAR: return p.cvjetna_aritm()
@@ -474,7 +474,7 @@ class P(Parser):
         p >> T.OZ
         return arg
 
-    def cvjetna_aritm(p): #aritmetičke operacije za cvijeće (nema prioriteta), ali se ne mogu miješati
+    def cvjetna_aritm(p) -> 'closest|gen_dist|cvjetni_član': #aritmetičke operacije za cvijeće (nema prioriteta), ali se ne mogu miješati
         cilj = p.cvjetni_član()
         if p > T.CMP:
             return(p.closest(cilj))
@@ -483,7 +483,7 @@ class P(Parser):
         else:
             return cilj
 
-    def cvjetni_član(p): #članovi aritmetičkih operacija za cvijeće mogu biti
+    def cvjetni_član(p) -> 'Poziv|FLOWERVAR|FLOWERF|GENSEKV|LAT_NAZ ': #članovi aritmetičkih operacija za cvijeće mogu biti
         if call := p >= T.FLOWERVAR: #ili rezultat poziva cvjetne funkcije
             if call in p.funkcije:
                 funkcija = p.funkcije[call]
@@ -511,7 +511,7 @@ class P(Parser):
             faktori.append(p.faktor())
         return Umnožak.ili_samo(faktori)
 
-    def faktor(p) -> 'Suprotan|Poziv|aritm|BROJ|Info':
+    def faktor(p) -> 'Suprotan|Poziv|aritm|BROJ':
         if p >= T.MINUS:
             return Suprotan(p.faktor())
         elif call := p >= T.NUMVAR:
