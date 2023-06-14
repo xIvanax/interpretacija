@@ -25,6 +25,7 @@
 * napraviti funkciju vrijednost za cmp
 * provjeriti mozemo li kao povratnu vrijednost funkcije vratiti rezultat operatora CMP (kao sto mozemo npr rezultat operatora zbrajanja)
 * ~~rastavi datread na dvoje datoteke - riješeno _~Dorotea_~~
+* obrisati ast oneline
 # prije leksera
 '''
 Sto omogucavamo i kako:
