@@ -1275,6 +1275,17 @@ program(){
 €c1 = Rosa rubiginosa
 €compnw(€c1)
 #sad vidimo koja je najslicnija Rosi rubiginos
+€c2 = Rosa rugosa
+€novi = Lilium candidum
+<-Olea europaea
+<-€novi
+€c4 = Olea europaea
+€c1 ? €c2 ? €novi ? €c4
+€novi cmp
+#ispise najslicniji cvijet novom cvijetu iz baze
+<-Mammillaria mystax
+€najslicniji = Mammillaria mystax
+datw("dat32.txt", €najslicniji)
 }
 ''')
 """
