@@ -25,7 +25,8 @@ Sto omogucavamo i kako:
             -podaci o biljci se ispisuju
 
     7) print u datoteku pomocu kljucne rijeci 'datw'; npr. datw("ime.txt", nesto) gdje nesto moze biti
-    cvjetna varijabla, numericka varijabla, broj, cvjetna formula, sekvenca gena ili latinski naziv
+    cvjetna varijabla, numericka varijabla, broj, cvjetna formula, sekvenca gena ili latinski naziv ili
+    rezultat numeričke aritmetičke operacije ili poziva fje (bilo kojeg tipa)
 
     8) citanje iz datoteke pomocu kljucne rijeci 'datread'; npr $x = datread("ime.txt")
 
@@ -256,10 +257,10 @@ def bilj(lex):
 # funkcija -> (FLOWERVAR|NUMVAR) OO parametri? OZ VO naredbe VZ
 # parametri -> ime | parametri ZAREZ ime
 # ime -> NUMVAR | FLOWERVAR
-# naredba -> DATW OO DAT ZAREZ (BROJ|GENSEKV|LAT_NAZ|FLOWERF|FLOWERVAR|NUMVAR) |
+# naredba -> DATW OO DAT ZAREZ (cvjetni_clan|aritm) |
 #           NUMVAR numerickaNaredba | FLOWERVAR cvjetnaNaredba | INFO cvjetni_clan
 #           blok | RET povratna | SQLINSERT LAT_NAZ SQLINSERT FLOWERF SQLINSERT GENSEKV |
-#           SQLFETCH cvjetni_član
+#           SQLFETCH cvjetni_član | (LAT_NAZ|FLOWERF|GENSEKV) (closest|gen_dist)
 # naredbe -> naredba | naredbe NR naredba
 # numerickaNaredba -> pridružiIzDat  | pridružiN | petlja | poziv
 # cvjetnaNaredba -> pridružiIzDat | pridruziF | gen_dist | closest | poziv
@@ -318,13 +319,20 @@ class P(Parser):
 
     def naredba(p) -> 'petlja|blok|Vrati|Pridruživanje|UpisiUDat|PridruziIzDat':
         p >= T.NR
-        if p >= T.DATW:#u sljedecem retku gutao NR
+        if p >= T.DATW:#upisivanje u datoteku ovisno o tipu narednog izraza
             p >> T.OO
             dat = p >> T.DAT
             p >> T.ZAREZ
-            unos = p >> {T.BROJ, T.GENSEKV, T.LAT_NAZ, T.FLOWERF, T.FLOWERVAR, T.NUMVAR}
-            p >> T.OZ
-            return UpisiUDat(dat, unos)
+            if p > {T.BROJ, T.NUMVAR}:
+                unos = p.aritm()
+                p >> T.OZ
+                return UpisiUDat(dat, unos)
+            elif p > {T.GENSEKV, T.LAT_NAZ, T.FLOWERF, T.FLOWERVAR}:
+                unos = p.cvjetni_član()
+                p >> T.OZ
+                return UpisiUDat(dat, unos)
+            else:
+                return SintaksnaGreška("U datoteku se mogu upisivati samo cvjetni ili numerički tipovi podataka.")
         elif p > T.NUMVAR: #numeričkoj varijabli se može:
             ime = p.ime()
             if p >= T.JEDN:
@@ -338,7 +346,6 @@ class P(Parser):
             elif p > T.VO: #ili nakon nje slijedi petlja
                 return p.petlja(ime)
             else: #mora biti poziv funkcije
-                print("pozivvvvvvvvvvvvvv")
                 if ime in p.funkcije:
                     funkcija = p.funkcije[ime]
                     return Poziv(funkcija, p.argumenti(funkcija.parametri))
@@ -1190,8 +1197,8 @@ Create("Botanika", stupci).razriješi()
             print('\t', thing) """
 
 #isprobavanje parsera:
-"""isprobano (lesker/parser)
-proba = P('''#dio s numerickom fjom radi, a s cvjetnom ne radi
+#isprobano (lesker/parser)
+proba = P('''
 €cvjetnaFja(€a){
     ret €a
 }
@@ -1204,6 +1211,10 @@ $void($a){
 }
 program(){
 $broj = 22
+datw("data.txt", $broj + $broj)
+€cvijet = Rosa aaaaaaa
+datw("data2.txt", %ATGCTGACGTACGTTA)
+datw("data3.txt", €cvjetnaFja(€cvijet))
 €cvijet = Rosa rubiginosa
 $broj = $numerickaFja(222)
 €cvijet = €cvjetnaFja(Rosa rubiginosa)
@@ -1212,7 +1223,7 @@ datw("dat.txt", $broj)
 $void(355)
 }
 ''')
-"""
+
 """isprobano (lekser/parser)
 proba = P('''#komentar
 program(){
@@ -1263,17 +1274,6 @@ program(){
 €c1 = Rosa rubiginosa
 €compnw(€c1)
 #sad vidimo koja je najslicnija Rosi rubiginos
-€c2 = Rosa rugosa
-€novi = Lilium candidum
-<-Olea europaea
-<-€novi
-€c4 = Olea europaea
-€c1 ? €c2 ? €novi ? €c4
-€novi cmp
-#ispise najslicniji cvijet novom cvijetu iz baze
-<-Mammillaria mystax
-€najslicniji = Mammillaria mystax
-datw("dat32.txt", €najslicniji)
 }
 ''')
 """
