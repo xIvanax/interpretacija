@@ -22,10 +22,10 @@
 * ~~treba provjeriti javlja li gresku ako cvjetnoj varijabli pridruzimo broj ili poziv fje koja vraca broj i slicno~~
 * ~~za sada smo ostavili da je upis u datoteku takav da se stari sadrzaj brise i unosi se novi, mozda ako smislimo kako bismo citali iz datoteke u slucaju da se u datoteku samo nadopise mozemo to uskladiti - nije me više briga _~Ivana_ ~~
 * ~~moraju li vitice bit u novom redu - pa meni se čini da ne moraju, barem nije na testiranom stvaralo probleme _~Dorotea_~~
-* napraviti funkciju vrijednost za cmp
-* provjeriti mozemo li kao povratnu vrijednost funkcije vratiti rezultat operatora CMP (kao sto mozemo npr rezultat operatora zbrajanja)
+* ~~napraviti funkciju vrijednost za cmp - odluceno da nijedan operator nis ne vraca~~
+* ~~provjeriti mozemo li kao povratnu vrijednost funkcije vratiti rezultat operatora CMP (kao sto mozemo npr rezultat operatora zbrajanja) - odluceno da nijedan operator nis ne vraca~~
 * ~~rastavi datread na dvoje datoteke - riješeno _~Dorotea_~~
-* uskladiti cvjetnu formulu u lekseru i u citanju iz datoteka
+* ~~uskladiti cvjetnu formulu u lekseru i u citanju iz datoteka - popravljeno _~Ivana_~~
 # prije leksera
 '''
 Sto omogucavamo i kako:
