@@ -14,7 +14,7 @@
 * ~~ne radi pridruzivanje funkcije tipa $x =f($y) - iz nekog razloga proguta =f kao ime funkcije umjesto da zasebno proguta = i f - treba popraviti ili cemo kao dodatan uvjet u jeziku definirati "prozračnost" koda (moraju dolaziti razmaci izmedu svega) - resolved, bila je grška u lekseru _~Ivana_~~
 * ~~funkcija se ne može pozvati bez da se pridruži varijabli - popravljeno _~Ivana_~~
 * ~~omogucene void fje (umjesto ret nesto moze biti i samo ret) _~Ivana_~~
-* ~~treba provjeriti javlja li gresku ako cvjetnoj varijabli pridruzimo broj ili poziv fje koja vraca broj i slicno
+* ~~treba provjeriti javlja li gresku ako cvjetnoj varijabli pridruzimo broj ili poziv fje koja vraca broj i slicno~~
 * za sada smo ostavili da je upis u datoteku takav da se stari sadrzaj brise i unosi se novi, mozda ako smislimo kako bismo citali iz datoteke u slucaju da se u datoteku samo nadopise mozemo to uskladiti
 * ~~moraju li vitice bit u novom redu - pa meni se čini da ne moraju, barem nije na testiranom stvaralo probleme _~Dorotea_~~
 * napraviti funkciju vrijednost za cmp
