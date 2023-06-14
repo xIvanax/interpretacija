@@ -428,8 +428,8 @@ class P(Parser):
         while p >= T.CMP:
             if p > T.FLOWERVAR:
                 flowers.append(p.ime())
-            elif p > {T.FLOWERF, T.GENSEKV, T.LAT_NAZ}:
-                flowers.append(p.cvjetni_član())
+            elif t := p >= {T.FLOWERF, T.GENSEKV, T.LAT_NAZ}:
+                flowers.append(t)
             else: #ako je T.CMP zadnji onda se u listi nalazi samo pocetna biljka koju cemo usporedivati s bazom podataka
                 return Closest(flowers)
         return Closest(flowers)
@@ -476,14 +476,19 @@ class P(Parser):
 
     def cvjetna_aritm(p) -> 'closest|gen_dist|cvjetni_član': #aritmetičke operacije za cvijeće (nema prioriteta), ali se ne mogu miješati
         cilj = p.cvjetni_član()
-        if p > T.CMP:
-            return(p.closest(cilj))
-        elif p > T.ED:
+        if p > T.ED:
             return(p.gen_dist(cilj))
         else:
             return cilj
 
-    def cvjetni_član(p) -> 'Poziv|FLOWERVAR|FLOWERF|GENSEKV|LAT_NAZ ': #članovi aritmetičkih operacija za cvijeće mogu biti
+    def cvjetni_član(p):
+        cilj1 = p.cvjetni_faktor()
+        if p > T.CMP:
+            return(p.closest(cilj1))
+        else:
+            return cilj1
+
+    def cvjetni_faktor(p): #članovi aritmetičkih operacija za cvijeće mogu biti
         if call := p >= T.FLOWERVAR: #ili rezultat poziva cvjetne funkcije
             if call in p.funkcije:
                 funkcija = p.funkcije[call]
@@ -795,7 +800,8 @@ class Fetch(AST):
 class Closest(AST):
     """Na temelju prvog cvjetnog podatka iz liste među ostalima pronalazi njemu genetski najbližeg"""
     flowers: '(FLOWERVAR|GENSEKV|LAT_NAZ|FLOWERF)*'
-    def izvrši(self,mem,unutar):
+
+    def vrijednost(self,mem,unutar):
         genKodovi=[] #lista genetskih kodova koje usporedujemo
         broj=-1
         #prvo trazimo redni broj i genetski kod prve (mozda i jedine) biljke u listi
@@ -855,9 +861,8 @@ class Closest(AST):
                         maks=brojac
                         br=pronadiBroj("GS",genKodovi[j])
                         cvijet2=vratiPodatak("LN",br)
-        print(cvijet2) #vracamo biljku najblizu promatranoj
-                        #i print - kiki
-############################################odlucite se i popravite komentar
+        return cvijet2 #vraćamo biljku najblizu promatranoj
+
 class Distance(AST):
     """U listi cvjetnih podataka pronalazi dvije genetski najbliže biljke"""
     flowers: '(FLOWERVAR|GENSEKV|LAT_NAZ|FLOWERF)*'
@@ -1083,7 +1088,7 @@ class Poziv(AST):
         argumenti = [a.vrijednost(mem, unutar) for a in poziv.argumenti]
         return pozvana.pozovi(argumenti)
 
-    def izvrši(poziv, mem, unutar):
+    def izvrši(poziv, mem, unutar): #za samostalne pozive (bez pridruživanja)
         pozvana = poziv.funkcija
         if pozvana is nenavedeno: pozvana = unutar  # rekurzivni poziv
         argumenti = [a.vrijednost(mem, unutar) for a in poziv.argumenti]
@@ -1198,6 +1203,7 @@ Create("Botanika", stupci).razriješi()
 
 #isprobavanje parsera:
 #isprobano (lesker/parser)
+"""
 proba = P('''
 €cvjetnaFja(€a){
     ret €a
@@ -1212,9 +1218,11 @@ $void($a){
 program(){
 $broj = 22
 datw("data.txt", $broj + $broj)
-€cvijet = Rosa aaaaaaa
-datw("data2.txt", %ATGCTGACGTACGTTA)
-datw("data3.txt", €cvjetnaFja(€cvijet))
+€cvijet = Rosa rubiginosa
+€cvijet1 = €cvijet ß Rosa rubiginosa ß Rosa rugosa
+datw("data5.txt", €cvijet ß Rosa rubiginosa ß Rosa rugosa)
+datw("data6.txt", €cvijet1)
+datw("data4.txt", €cvijet1)
 €cvijet = Rosa rubiginosa
 $broj = $numerickaFja(222)
 €cvijet = €cvjetnaFja(Rosa rubiginosa)
@@ -1223,7 +1231,7 @@ datw("dat.txt", $broj)
 $void(355)
 }
 ''')
-
+"""
 """isprobano (lekser/parser)
 proba = P('''#komentar
 program(){
