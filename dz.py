@@ -622,10 +622,12 @@ class PridruziIzDatF(AST): #pridruzivanje procitanog iz datoteke numerickoj vari
             if(len(lista)==2) and procitaj[0].isupper():
                 t=procitaj.find(" ")
                 if procitaj[t+1].isupper():
-                    raise Greška("Očekivano malo slovo drugoj riječi u latinskom nazivu biljke.")
+                    raise Greška("Očekivano malo slovo u drugoj riječi u latinskom nazivu biljke.")
                 else:
                     mem[self.ime]=procitaj
-
+            else:
+                raise Greška('Neispravno unesen latinski naziv biljke')
+            
         elif procitaj[0] == "%": #potrebno provjerit je li genetska sekvenca ispravno unesena
             for i in procitaj[1:]:
                 if i not in {"A", "G", "C", "T"}:
@@ -691,9 +693,12 @@ class PridruziIzDatF(AST): #pridruzivanje procitanog iz datoteke numerickoj vari
 
                 if procitaj[i] in {'O', 'V'}: #ovules (optional)
                     i+=ffnumbers(i+1, procitaj)+1
-
+            
             mem[self.ime]=procitaj
-
+            
+        else:
+            raise Greška("Podatak u datoteci nije moguće zapisati u cvjetnu varijablu jer se tipovi ne podudaraju.")
+            
         f.close()
 
 class Stupac(AST):
@@ -1235,7 +1240,6 @@ class Umnožak(AST):
     def vrijednost(umnožak, mem, unutar):
         return math.prod(f.vrijednost(mem, unutar) for f in umnožak.faktori)
 
-
 class Povratak(NelokalnaKontrolaToka): """Signal koji šalje naredba vrati."""
 
 #sql
@@ -1353,6 +1357,8 @@ program(){
 #sad vidimo koja je najslicnija Rosi rubiginos
 }
 ''')
+''') """
+
 """isprobano (lekser/parser)
 proba = P('''#komentar
 $zb($a){
@@ -1418,7 +1424,7 @@ izvrši(proba) #naredba izvrši je ta koja pokrece
             print('\t', thing) """
 
 ###treba otkomentirati za unos kroz terminal
-ukupni = "program(){\n"
+""" ukupni = "program(){\n"
 trenutni = ""
 funkcije = ""
 main = ""
@@ -1460,4 +1466,4 @@ while 1:
     if flag==1:
         if ';' not in ulaz:
             main +=ulaz
-    trenutni = ""
+    trenutni = "" """
