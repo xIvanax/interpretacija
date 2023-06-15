@@ -4,10 +4,10 @@ Sto omogucavamo i kako:
         obavezni su prelasci u novi red, a kraj unošenja naredbi označava se pomoću ';' (';' mora
         doći u novom retku) što započinje izvršavanje do sad unesenih naredbi)
 
-    2) varijable (cvjetnog tipa se oznacavaju kao €varijabla, a numeričkog kao $var)
+    2) varijable (cvjetnog tipa se označavaju kao €varijabla, a numeričkog kao $var)
 
-    3) for petlja (npr. $var{$k = $k + 1} -> znaci da se €var puta izvrši naredba $k = $k+1);
-    umjesto NUMVAR mozemo imati i obican broj
+    3) for petlja (npr. $var{$k = $k + 1} -> znači da se $var puta izvrši naredba $k = $k+1);
+    umjesto numeričke varijable prije vitice možemo imati i običan broj
 
     4) definicije funkcija (npr. $plus($a, $b){ret $a+$b}); fja uvijek mora završiti s ret, ali on može biti
     prazan (ne mora vratiti konkretnu vrijednost) ili ako nije prazan mora biti usklađen s imenom fje (dakle,
@@ -26,53 +26,54 @@ Sto omogucavamo i kako:
         i sekvenca gena ili latinski naziv ili cvjetna formula
             -podaci o biljci se ispisuju
 
-    7) print u datoteku pomocu kljucne rijeci 'datw'; npr. datw("ime.txt", nesto) gdje nesto moze biti
+    7) print u datoteku pomocu kljucne rijeci 'datw'; npr. datw("ime.txt", nesto) gdje nesto može biti
     cvjetna varijabla, numericka varijabla, broj, cvjetna formula, sekvenca gena ili latinski naziv ili
     rezultat numeričke aritmetičke operacije ili rezultat aritmetičkog cvjetnog operatora CMP 
     ili poziva fje (bilo kojeg tipa)
 
-    8) citanje iz datoteke pomocu kljucne rijeci 'datread'; npr $x = datread("ime.txt")
+    8) čitanje iz datoteke pomoću ključne riječi 'datread'; npr $x = datread("ime.txt"); obavlja
+    se i provjera tipa pri pridruživanju
 
-    9) konacni tip podataka (flower formula
-        nalazit ce se u uglatim zagradama i sastojat ce se od velikih i malih slova i brojeva;
-        (https://en.wikipedia.org/wiki/Floral_formula)
+    9) konačni tip podatka (flower formula
+        nalazit će se u uglatim zagradama i sastojat će se od velikih i malih slova i brojeva u skladu
+        s pravilima na linku; (https://en.wikipedia.org/wiki/Floral_formula)
 
-    7) potencijalno beskonacni tip podatka (sekvence dna - zapocinje s % i smije sadržavati samo
+    7) potencijalno beskonačni tip podatka (sekvence dna - započinje s % i smije sadržavati samo
         slova A, C, T, G)
 
-    8) operator ? (alias ed) koristi se za racunanje genetske udaljenosti(evolutionary distance);
-        to je višemjesni operator sto znaci da se moze pozvati na proizvoljno mnogo biljaka;
-        tim biljkama ce se genomi usporedivati do duljine biljke s najkracim genomom i
-        ispisat ce se one dvije biljke s najmanjom razlikom, a vratiti ce na koliko se mjesta podudaraju
-        geni u genetskom kodu; kao i info moze se pozvati na latinskom nazivu, sekvencama gena, cvjetnoj
-        formuli ili cvjetnoj varijabli
+    8) operator ? (alias ed) koristi se za računanje genetske udaljenosti(evolutionary distance);
+        to je višemjesni operator što znači da se može pozvati na proizvoljno mnogo biljaka;
+        tim biljkama će se genomi uspoređivati do duljine biljke s najkraćim genomom i
+        ispisat će se one dvije biljke s najmanjom razlikom; kao i info može se pozvati 
+        na latinskom nazivu, sekvencama gena, cvjetnoj formuli ili cvjetnoj varijabli
             -unos: €cvijet ? Rosa rubiginosa ? Rosa rugosa, gdje je €cvijet latinski naziv, sekvenca gena ili
             cvjetna formula neke biljke
             -analogan unos: €cvijet cmp Rosa rubiginosa cmp Rosa rugosa
 
-    9) operator ß (alias cmp) koristi se za pronalazak genetski najblizeg cvijeta, višemjesni je;
-        npr "Rosa Rubiginosa ß Rosa rugosa ß Olea europaea" ce odlučiti je li Rosa Rugosa
-        ili Olea europaea genetski bliža cvijetu Rosa Rubiginosa; takoder se moze proslijediti latinski naziv,
+    9) operator ß (alias cmp) koristi se za pronalazak genetski najbližeg cvijeta, višemjesni je;
+        npr "Rosa Rubiginosa ß Rosa rugosa ß Olea europaea" će odlučiti je li Rosa Rugosa
+        ili Olea europaea genetski bliža cvijetu Rosa Rubiginosa; također se može proslijediti latinski naziv,
         genetska sekvenca ili cvjetna formula biljke
-            -omogucen je i unos: Olea europaea ß, koji ce genetski kod zadane biljke usporediti sa svim
+            -omogućen je i unos: Olea europaea ß, koji će genetski kod zadane biljke usporediti sa svim
             genetskim kodovima biljaka koji se nalaze u tablici podataka
-            -unos: Citrus limon ß Acer palmatum ß, usporedit ce genetske kodove Citrus limona i Acera palmatuma,
-            nece pretrazivati bazu
+            -unos: Citrus limon ß Acer palmatum ß, usporedit će genetske kodove Citrus limona i Acera palmatuma,
+            neće pretraživati bazu
             -povratna vrijednost: cvjetni tip koji reprezentira genetski najbliži cvijet
 
-    10) sql naredba za unos cvijeta u tablicu pomocu operator '->' (alias: unesi)
-            -primjer: ->Rosa rubiginosa->[K5C5AG10]->ATGCTGACGTACGTTA
-            -primjer: unesi Rosa rubiginosa unesi [K5C5AG10] unesi ATGCTGACGTACGTTA
-        gornje naredbe unose u tablicu redak gdje je ime Rosa rubiginosa, cvjetna formula je K5C5AG10)
+    10) sql naredba za unos cvijeta u tablicu pomoću operator '->' (alias: unesi)
+            -primjer: ->Rosa rubiginosa->[K5C5AG10]->%ATGCTGACGTACGTTA
+            -primjer: unesi Rosa rubiginosa unesi [K5C5AG10] unesi %ATGCTGACGTACGTTA
+        gornje naredbe unose u tablicu redak gdje je ime Rosa rubiginosa, cvjetna formula je [K5C5AG10])
 
-    11) sql naredba za pronalazak podataka o cvijetu iz tablice pomocu operatora '<-' (alias: dohvati)
+    11) sql naredba za pronalazak podataka o cvijetu iz tablice pomoću operatora '<-' (alias: dohvati)
             -unos: <-Rosa rubiginosa, ispis: Rosa rubiginosa  [K5C5AG10]  ATGCTGACGTACGTTA
             -analogni unos: dohvati Rosa rubiginosa
 
     napomena: pojedine naredbe u jeziku moraju biti odvojene s \n
-    napomena: korisnik ne moze definirati funkciju s imenom 'program' jer je to rezervirano za main
-    napomena: Mozemo biljku identificirati s bilo kojim od: cvjetna varijabla, latinski naziv, cvjetna formula 
-    ili sekvencama gena (svaki od njih jedinstveno odreduje biljku)
+    napomena: korisnik ne može definirati funkciju s imenom 'program' jer je to rezervirano za main; zamisljeno 
+    je da 'program' ne prima i ne vraca nista
+    napomena: možemo biljku identificirati s bilo kojim od: cvjetna varijabla, latinski naziv, cvjetna formula 
+    ili sekvencama gena (svaki od njih jedinstveno određuje biljku)
 '''
 import os
 from vepar import *
@@ -100,11 +101,11 @@ def ffControl(lex):
 class T(TipoviTokena):
     RET = 'ret' #povratna vrijednost funkcije
     DATW, DATREAD = 'datw', 'datread' #pisi u datoteku/citaj datoteku
-    EOL = ";" #kraj unosa (bitno za terminal - izvršava dosadašnje naredbe)
+    EOL = ";" #kraj unosa (bitno za terminal - izvrsava dosadasnje naredbe)
     INFO = '~' #informacije o cvijetu
     NR = "\n" #separator naredbi
-    CMP, JEDN, ED, GEN = 'ß=?%' #znak jednakosti i posebni operatori za cvjetni tip
-    PLUS, MINUS, PUTA, KROZ, ZAREZ = '+-*/,' #klasicni aritmeticki operatori za numericki tip
+    CMP, JEDN, ED, GEN = 'ß=?%' #znak jednakosti i posebni operatori za cvjetne tipove
+    PLUS, MINUS, PUTA, ZAREZ = '+-*,' #klasicni aritmeticki operatori za numericki tip
     OO, OZ, VO, VZ, UO, UZ = '(){}[]' #npr. OO = obla otvorena
     SQLINSERT = '->' #unos u bazu podataka
     SQLFETCH = '<-' #dohvacanje iz baze podataka
@@ -113,7 +114,7 @@ class T(TipoviTokena):
         def vrijednost(self, mem, unutar): return self.sadržaj
     class BROJ(Token):
         def vrijednost(self, mem, unutar): return int(self.sadržaj)
-    class NUMVAR(Token): #numerička varijabla/fja
+    class NUMVAR(Token): #numericka varijabla/fja
         def vrijednost(self, mem, unutar): return mem[self]
     class FLOWERVAR(Token): #cvjetna varijabla (vrijednost je cvjetna formula, sekvenca dna ili latinski naziv)/fja
         def vrijednost(self, mem, unutar): return mem[self]
@@ -136,7 +137,7 @@ def bilj(lex):
             yield lex.token(T.BROJ)
         elif znak in {'{', '}', '(', ')'}:
             yield lex.literal(T)
-        elif znak.isupper(): #latinski naziv
+        elif znak.isupper(): #latinski naziv - prva riječ velikim, druga malim slovom
             lex * str.isalpha
             if lex >= " ":
                 znak = next(lex)
@@ -145,16 +146,16 @@ def bilj(lex):
                 else:
                     lex * str.isalpha
                 yield lex.literal_ili(T.LAT_NAZ)
-        elif znak == '€':   #cvjetna varijabla
+        elif znak == '€':   #cvjetna varijabla/fja
             lex * str.isalnum
             yield lex.literal_ili(T.FLOWERVAR)
-        elif znak == '$':   #numerička varijabla
+        elif znak == '$':   #numericka varijabla/fja
             lex * str.isalnum
             yield lex.literal_ili(T.NUMVAR)
         elif znak == '#': #jednolinijski komentar
             lex - "\n"
             lex.zanemari()
-        elif znak == '[': #cvjetna formula (za detalje: https://en.wikipedia.org/wiki/Floral_formula)
+        elif znak == '[': #cvjetna formula
             flag = 0
             if poc1 := lex >= 'B': #bracts (optional)
                 if not lex > 't':
@@ -258,32 +259,33 @@ def bilj(lex):
 
 ### BKG (ne sasvim - zbog minimalnog konteksta)
 # program -> funkcija | funkcija program
-# funkcija -> (FLOWERVAR|NUMVAR) OO parametri? OZ VO naredbe VZ
+# funkcija -> NR? (FLOWERVAR|NUMVAR) OO parametri? OZ NR? VO NR? naredbe NR? VZ NR? |
+#              NR? PROGRAM OO OZ NR? VO NR? naredbe NR? VZ NR?
 # parametri -> ime | parametri ZAREZ ime
 # ime -> NUMVAR | FLOWERVAR
 # naredba -> DATW OO DAT ZAREZ (cvjetni_clan|aritm) |
 #           NUMVAR numerickaNaredba | FLOWERVAR cvjetnaNaredba | INFO cvjetni_clan
-#           blok | RET povratna | SQLINSERT LAT_NAZ SQLINSERT FLOWERF SQLINSERT GENSEKV |
-#           SQLFETCH cvjetni_član | (LAT_NAZ|FLOWERF|GENSEKV) (closest|gen_dist)
+#           blok | RET povratna | RET | SQLINSERT LAT_NAZ SQLINSERT FLOWERF SQLINSERT GENSEKV |
+#           SQLFETCH cvjetni_član | (LAT_NAZ|FLOWERF|GENSEKV) (closest|gen_dist) | BROJ petlja
 # naredbe -> naredba | naredbe NR naredba
 # numerickaNaredba -> pridružiIzDat  | pridružiN | petlja | poziv
-# cvjetnaNaredba -> pridružiIzDat | pridruziF | gen_dist | closest | poziv
+# cvjetnaNaredba -> pridružiIzDat | pridružiF | ED gen_dist | CMP closest | CMP | poziv
 # pridružiIzDat ->  JEDNAKO DATREAD OO DAT OZ 
 # pridružiN -> JEDNAKO aritm
 # pridružiF -> JEDNAKO cvjetna_aritm
-# petlja -> NUMVAR VO naredbe VZ | BROJ VO naredbe VZ
+# petlja -> NR? VO NR? naredbe NR? VZ
 # poziv -> OO OZ | OO argumenti OZ
 # argumenti -> argument | argumenti ZAREZ argument
 # argument -> aritm |! cvjetna_aritm  [!KONTEKST]
 # gen_dist -> cvjetni_clan |  gen_dist ED cvjetni_clan
 # closest -> cvjetni_clan |  closest CMP cvjetni_clan
-# cvjetna_aritm -> cvjetni_clan gen_dist | cvjetni_clan
-# cvjetni_clan -> cvjetni_clan closest | cvjetni_faktor
+# cvjetna_aritm -> cvjetni_clan ED gen_dist | cvjetni_clan
+# cvjetni_clan -> cvjetni_faktor CMP closest | cvjetni_faktor
 # cvjetni_faktor -> FLOWERF | GENSEKV | LAT_NAZ | FLOWERVAR | FLOWERVAR poziv
 # aritm -> član | aritm PLUS član | aritm MINUS član
 # član -> faktor | član ZVJEZDICA faktor
 # faktor -> BROJ | NUMVAR | NUMVAR poziv | OO aritm OZ | MINUS faktor
-# povratna -> aritm |! cvjetna_aritm |! (FLOWERF|GENSEKV|LAT_NAZ) |! BROJ [!KONTEKST]
+# povratna -> (aritm|BROJ) |! (cvjetna_aritm|FLOWERF|GENSEKV|LAT_NAZ) [!KONTEKST]
 
 ### Parser
 class P(Parser):
@@ -310,7 +312,6 @@ class P(Parser):
         return Funkcija(*atributi, p.naredba())
 
     def ime(p) -> 'NUMVAR|FLOWERVAR':
-        p >= T.NR
         return p >> {T.NUMVAR, T.FLOWERVAR}
 
     def parametri(p) -> 'ime*':
@@ -323,7 +324,6 @@ class P(Parser):
         return param
 
     def naredba(p) -> 'petlja|blok|Vrati|Pridruživanje|UpisiUDat|PridruziIzDatF|PridruziIzDatN|Poziv|Insert|Fetch|gen_dist|closest|Info':
-        p >= T.NR
         if p >= T.DATW:#upisivanje u datoteku ovisno o tipu narednog izraza
             p >> T.OO
             dat = p >> T.DAT
@@ -429,7 +429,6 @@ class P(Parser):
         return Distance(flowers)
 
     def closest(p, first) -> 'Closest': #operator CMP
-        print(first)
         flowers = [first]
         while p >= T.CMP:
             if p > T.FLOWERVAR:
@@ -441,26 +440,24 @@ class P(Parser):
         return Closest(flowers)
 
     def tipa(p, ime) -> 'aritm|cvjetna_aritm': #određuje tip s kojim dalje radimo (numerički ili cvjetni)
-        p >= T.NR
         if ime ^ T.NUMVAR: return p.aritm()
         elif ime ^ T.FLOWERVAR: return p.cvjetna_aritm()
         else: assert False, f'Nepoznat tip od {ime}'
 
     def petlja(p, kolikoPuta) -> 'Petlja': #petlja (moze, a ne mora biti viselinijska)
+        p >= T.NR
         p >> T.VO
         p >= T.NR
-        izvrsiti=[]
-        izvrsiti.append(p.naredba())
-        p >= T.NR
-        while(not(p>T.VZ)):
+        izvrsiti=[p.naredba()]
+        while p >= T.NR and not p > T.VZ:
             izvrsiti.append(p.naredba())
-            p >= T.NR
         p >> T.VZ
         return Petlja(kolikoPuta, izvrsiti)
 
     def blok(p) -> 'Blok|naredba': #blok naredbi unutar vitica
         p >= T.NR
         p >> T.VO
+        p >= T.NR
         if p >= T.VZ: return Blok([])
         n = [p.naredba()]
         while p >= T.NR and not p > T.VZ:
@@ -544,7 +541,7 @@ def izvrši(funkcije, *argv):
     funkcije['program'].pozovi(argv)
 
 ### AST
-# Funkcija: ime: NUMVAR|FLOWERVAR parametri:[NUMVAR|FLOWERVAR] tijelo:naredba
+# Funkcija: ime: NUMVAR|FLOWERVAR|PROGRAM parametri:[NUMVAR|FLOWERVAR] tijelo:naredba
 # naredba: Petlja: kolikoPuta:NUMVAR|BROJ tijelo:[naredba]
 #          Blok: naredbe:[naredba]
 #          Pridruživanje: ime:NUMVAR|FLOWERVAR pridruženo:izraz
@@ -582,7 +579,8 @@ class UpisiUDat(AST):
                 string = string[0:len(string)-1]
         f.write(string)
         f.close()
-
+#pomocna funkcija koja sluzi za provjeru ispravnosti cvjetne formule prilikom citanja iz datoteke
+#vraca broj mjesta koje zauzima broj iz svakog dijela biljke
 def ffnumbers(p, s):
     if s[p] == '>':
         return 1
@@ -607,8 +605,6 @@ class PridruziIzDatN(AST):
     imeDat: 'DAT'
     def izvrši(self,mem,unutar):
         cistoIme = self.imeDat.vrijednost(mem, unutar)
-        print("ime datoteke:")
-        print(self.imeDat)
         novoIme = cistoIme[1:len(cistoIme) - 1] #uklonjeni navodnici iz imena kako bi se mogao izvrsiti open
         f = open(novoIme, 'r')
         procitaj = f.read()
@@ -627,8 +623,6 @@ class PridruziIzDatF(AST):
     imeDat: 'DAT'
     def izvrši(self,mem,unutar):
         cistoIme = self.imeDat.vrijednost(mem, unutar)
-        print("ime datoteke:")
-        print(self.imeDat)
         novoIme = cistoIme[1:len(cistoIme) - 1] #uklonjeni navodnici iz imena kako bi se mogao izvrsiti open
         f = open(novoIme, 'r')
         procitaj = f.read()
@@ -764,7 +758,6 @@ class Insert(AST):
                         pristup.objekt.rows.append(self.drugi.vrijednost(mem,unutar))
                     elif stupac=="GS":
                         pristup.objekt.rows.append(self.treci.vrijednost(mem,unutar))
-        return
 
 class Fetch(AST):
     """Na temelju zadanog cvjetnog podatka dohvaca sve podatke pripadne biljke iz tablice"""
@@ -801,7 +794,6 @@ class Fetch(AST):
             ln=vratiPodatak("LN",broj)
             ff=vratiPodatak("FF",broj)
         print(ln+" "+ff+" "+gs) #ispis dohvacenih podataka
-        return
 
 class Closest(AST):
     """Na temelju prvog cvjetnog podatka iz liste među ostalima pronalazi njemu genetski najbližeg"""
@@ -1247,7 +1239,6 @@ program(){
     $a = 5
     $a = $fakt($a)
     datw("dat15.txt", $a)
-    #pise faktorijel od a u dat15.txt
 }
 ''')
 """
@@ -1303,12 +1294,12 @@ program(){
 €najslicniji = Mammillaria mystax
 datw("dat32.txt", €najslicniji)
 }
-
 ''')
 """
 #cetvrti program
 """
 proba = P('''
+program(){
 ->Laurus nobilis->[BtP4A1G>]->%TAGAGAATCCCGCTGTAATACCGTGA
 €cvijet = Laurus nobilis
 €najblizi = €cvijet ß 
@@ -1322,14 +1313,16 @@ datw("dat1.txt",€cvijet ß Rosa rubiginosa ß Citrus limon)
 #u datoteku zapisujemo koja je od biljaka, Rosa rubiginosa ili Citrus limon, bliza promatranoj biljci
 €procitaj = datread("dat1.txt")
 ~ €procitaj
+}
 ''')
 """
-#otkomentirati sljedeca dva retka za testiranje programa
-#prikaz(proba, 5)
-#izvrši(proba)
 
-
-###treba otkomentirati za unos kroz terminal
+#### otkomentirati sljedeca dva retka za testiranje programa
+"""
+prikaz(proba, 5)
+izvrši(proba)
+"""
+### treba otkomentirati za unos kroz terminal
 """
 ukupni = "program(){\n"
 trenutni = ""
