@@ -40,7 +40,7 @@ Christian Sandri
 * ~~funkcija se ne može pozvati bez da se pridruži varijabli - popravljeno _~Ivana_~~
 * ~~omogucene void fje (umjesto ret nesto moze biti i samo ret) _~Ivana_~~
 * ~~treba provjeriti javlja li gresku ako cvjetnoj varijabli pridruzimo broj ili poziv fje koja vraca broj i slicno~~
-* ~~za sada smo ostavili da je upis u datoteku takav da se stari sadrzaj brise i unosi se novi, mozda ako smislimo kako bismo citali iz datoteke u slucaju da se u datoteku samo nadopise mozemo to uskladiti - nije me više briga _~Ivana_ ~~
+* ~~za sada smo ostavili da je upis u datoteku takav da se stari sadrzaj brise i unosi se novi, mozda ako smislimo kako bismo citali iz datoteke u slucaju da se u datoteku samo nadopise mozemo to uskladiti - _~Ivana_ ~~
 * ~~moraju li vitice bit u novom redu - pa meni se čini da ne moraju, barem nije na testiranom stvaralo probleme _~Dorotea_~~
 * ~~napraviti funkciju vrijednost za cmp - odluceno da nijedan operator nis ne vraca~~
 * ~~provjeriti mozemo li kao povratnu vrijednost funkcije vratiti rezultat operatora CMP (kao sto mozemo npr rezultat operatora zbrajanja) - odluceno da nijedan operator nis ne vraca~~
